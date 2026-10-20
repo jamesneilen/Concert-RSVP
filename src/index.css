@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  
+  --color-surface: #101412;
+  --color-surface-dim: #101412;
+  --color-surface-bright: #353a37;
+  --color-surface-lowest: #0a0f0c;
+  --color-surface-low: #181d1a;
+  --color-surface-card: #1c211e;
+  --color-surface-high: #262b28;
+  --color-surface-highest: #313632;
+
+  --color-gold: #e9c349;
+  --color-gold-light: #ffe088;
+  --color-gold-dark: #af8d11;
+  --color-gold-muted: rgba(233, 195, 73, 0.25);
+
+  --color-crimson: #8b0014;
+  --color-crimson-light: #ffb3ae;
+  --color-crimson-hover: #b4262c;
+
+  --color-evergreen: #0d3b2e;
+  --color-evergreen-light: #1f4a3c;
+  --color-evergreen-mint: #a3d0be;
+
+  --color-ivory: #dfe4de;
+  --color-ivory-dim: #a98987;
+  --color-ivory-variant: #e2bebc;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #101412;
+  color: #dfe4de;
+  overflow-x: hidden;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Material symbol baseline alignment */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.material-symbols-outlined.fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Smooth custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0f0c;
+}
+::-webkit-scrollbar-thumb {
+  background: #313632;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #af8d11;
+}

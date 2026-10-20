@@ -1,0 +1,69 @@
+[
+  {
+    "id": "rsvp-1792487172611-0lf8",
+    "timestamp": "10/20/2026, 9:06:12 AM",
+    "fullName": "Madam Theresa Ndumu",
+    "tier": "VIP Benefactor",
+    "guestCount": 2,
+    "passCode": "CK-2026-XMAS-1234",
+    "email": "theresa@example.org",
+    "phone": "+237 670 11 22 33",
+    "seatingZone": "Reserved Center Nave",
+    "prayerIntentions": "Thanksgiving for family and choir",
+    "photoUrl": "",
+    "status": "Confirmed • Active"
+  },
+  {
+    "id": "rsvp-1792486840442-lco0",
+    "timestamp": "10/20/2026, 9:00:40 AM",
+    "fullName": "Che Emmanuel",
+    "tier": "VIP Benefactor",
+    "guestCount": 3,
+    "passCode": "CK-2026-XMAS-9999",
+    "email": "che@example.com",
+    "phone": "+237 671 22 33 44",
+    "seatingZone": "Reserved Center Nave",
+    "prayerIntentions": "Thanksgiving for blessings",
+    "photoUrl": "",
+    "status": "Confirmed • Active"
+  },
+  {
+    "id": "rsvp-1",
+    "timestamp": "10/18/2026, 4:15:20 PM",
+    "fullName": "Dr. Eleanor Vance",
+    "tier": "VIP Benefactor",
+    "guestCount": 2,
+    "passCode": "CK-2026-XMAS-7821",
+    "email": "e.vance@cameroon-health.org",
+    "phone": "+237 677 82 91 04",
+    "seatingZone": "Reserved Center Nave • Pew A-14",
+    "prayerIntentions": "For peace and blessings over Bamenda and families in Christ the King Parish.",
+    "status": "Confirmed • Active"
+  },
+  {
+    "id": "rsvp-2",
+    "timestamp": "10/19/2026, 11:32:05 AM",
+    "fullName": "Pa Julius Fomuso",
+    "tier": "Guild Alumni",
+    "guestCount": 4,
+    "passCode": "CK-2026-XMAS-4190",
+    "email": "j.fomuso@yahoo.com",
+    "phone": "+237 675 14 30 89",
+    "seatingZone": "Reserved Left Transept • Pew B-02",
+    "prayerIntentions": "Thanksgiving for 30 years of choral fellowship.",
+    "status": "Confirmed • Active"
+  },
+  {
+    "id": "rsvp-3",
+    "timestamp": "10/19/2026, 6:48:19 PM",
+    "fullName": "Sr. Beatrice Lum",
+    "tier": "Clergy Guest",
+    "guestCount": 1,
+    "passCode": "CK-2026-XMAS-9032",
+    "email": "sr.beatrice@cathedral-diocese.org",
+    "phone": "+237 672 40 18 22",
+    "seatingZone": "Chancel Guest Sanctuary",
+    "prayerIntentions": "For vocations and sacred music ministry in the North West Region.",
+    "status": "Confirmed • Active"
+  }
+]

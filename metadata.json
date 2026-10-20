@@ -1,0 +1,6 @@
+{
+  "name": "St Cletus Choir - Christmas Concert RSVP & Pass",
+  "description": "Official RSVP & Personalized Keepsake Brag Pass for 'Sing Unto God for Christ is Born' Christmas Concert at Christ the King Parish, Nacho, Bamenda.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
