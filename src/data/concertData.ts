@@ -124,13 +124,13 @@ export const REPERTOIRE_LIST: RepertoireItem[] = [
   {
     id: 'm5',
     num: 'V.',
-    title: 'Waloyo Yamoni',
-    subtitle: 'Franz Xaver Gruber • All Sanctuary lights extinguished, choir surrounding Nave',
+    title: 'Mary Did You Know',
+    subtitle: 'Pentatonix • All Sanctuary lights extinguished, choir surrounding Nave',
     tag: 'By Candlelight',
     tagType: 'gold',
-    composer: 'Christopher Tin / Arr. Traditional African Carols',
-    description: 'We overcome the wind! A stunning African choral arrangement performed entirely by candlelight throughout the sanctuary nave.',
-    lyricsSnippet: 'Waloyo yamoni, koro piny obed mot. (We overcome the wind, now the world is at peace).'
+    composer: 'Pentatonix',
+    description: 'An evocative, haunting a cappella choral arrangement performed in solemn candlelight as choristers encircle the entire sanctuary nave, weaving rich multi-part harmonies into an intimate meditation on the Nativity.',
+    lyricsSnippet: 'Mary, did you know that your baby boy would one day walk on water? Did you know that your baby boy would save our sons and daughters? This Child that you delivered will soon deliver you.'
   },
   {
     id: 'm6',

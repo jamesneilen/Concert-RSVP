@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Library, Sparkles, X, BookOpen, Volume2, Users, Church } from 'lucide-react';
+import { Play, Pause, Library, Sparkles, X, BookOpen, Volume2, Users, Church, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { REPERTOIRE_LIST, RepertoireItem } from '../data/concertData';
 import { sacredAudio } from '../utils/audioSynth';
 
@@ -8,6 +8,22 @@ export const RepertoireSection: React.FC = () => {
   const [progressPercent, setProgressPercent] = useState(0);
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState('00:00');
   const [selectedMovement, setSelectedMovement] = useState<RepertoireItem | null>(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [isModalZoomed, setIsModalZoomed] = useState(false);
+
+  const choirRepertoireUrl = '/assets/st_cletus_choir_repertoire.jpeg';
+  const choirRepertoireRawUrl = '/assets/aistudio/IMG-20260802-WA0015_c8d270af.jpg';
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPhotoModal(false);
+        setSelectedMovement(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = sacredAudio.init((playing, progress) => {
@@ -66,20 +82,48 @@ export const RepertoireSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Left: Choirmaster Profile & Audio Player */}
           <div className="lg:col-span-5 bg-[#1c211e] rounded-xl overflow-hidden shadow-2xl flex flex-col border border-[#e9c349]/20">
-            <div className="relative h-56 sm:h-72 md:h-80 w-full overflow-hidden">
+            {/* Arranged Choir & Musical Director Photograph at Parish Sanctuary Gates */}
+            <div className="relative h-72 sm:h-84 md:h-96 w-full overflow-hidden bg-[#101412] group">
               <img
-                src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80"
-                alt="MD James Neilen conducting choir in sanctuary"
-                className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700 filter brightness-95"
+                src={choirRepertoireUrl}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = choirRepertoireRawUrl;
+                }}
+                alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda assembled at the parish gates"
+                className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-700 filter brightness-95"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1c211e] via-[#1c211e]/40 to-transparent" />
-              <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
-                <span className="px-2.5 py-0.5 rounded bg-[#1f4a3c]/90 text-[#e9c349] text-[9px] sm:text-[10px] font-bold tracking-wider uppercase border border-[#e9c349]/30 inline-block">
-                  Musical Director
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1c211e] via-[#1c211e]/30 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#101412]/75 to-transparent pointer-events-none" />
+
+              {/* Floating Top Left Identity Badge */}
+              <div className="absolute top-2.5 sm:top-3.5 left-2.5 sm:left-3.5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#0a0f0c]/85 text-[#e9c349] border border-[#e9c349]/35 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase backdrop-blur-md shadow-lg pointer-events-none">
+                <Users className="w-3 h-3 text-[#e9c349] flex-shrink-0" />
+                <span>Musical Director & Choristers</span>
+              </div>
+
+              {/* Floating Top Right Expand Button */}
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                aria-label="View full choir photograph"
+                className="absolute top-2.5 sm:top-3.5 right-2.5 sm:right-3.5 p-1.5 sm:px-2.5 sm:py-1 rounded-full bg-[#0a0f0c]/85 hover:bg-[#262b28] text-[#dfe4de] hover:text-[#e9c349] border border-[#e9c349]/35 text-[10px] font-semibold flex items-center gap-1.5 backdrop-blur-md transition-all shadow-lg cursor-pointer"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-[#e9c349]" />
+                <span className="hidden xs:inline">Expand Photo</span>
+              </button>
+
+              {/* Bottom Caption Overlay */}
+              <div className="absolute bottom-2.5 sm:bottom-3.5 left-3 sm:left-4 right-3 sm:right-4 pointer-events-none">
+                <span className="px-2 py-0.5 rounded bg-[#1f4a3c]/90 text-[#e9c349] text-[9px] sm:text-[10px] font-bold tracking-wider uppercase border border-[#e9c349]/30 inline-block mb-1">
+                  Music Ministry Leadership
                 </span>
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#dfe4de] mt-1 drop-shadow">
-                  MD James Neilen
+                <h3 className="font-serif text-lg sm:text-2xl font-bold text-[#dfe4de] drop-shadow leading-tight">
+                  MD James Neilen & St. Cletus Choir
                 </h3>
+                <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5 flex items-center gap-1.5">
+                  <Church className="w-3 h-3 text-[#e9c349] flex-shrink-0" />
+                  <span>Christ the King Parish • Nacho, Bamenda</span>
+                </p>
               </div>
             </div>
 
@@ -297,6 +341,95 @@ export const RepertoireSection: React.FC = () => {
               <Sparkles className="w-4 h-4 text-[#e9c349]" />
               <span>Listen to Hymnal Cadence</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Choir & Conductor Photograph Lightbox Modal */}
+      {showPhotoModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choir and Conductor Photograph"
+          className="fixed inset-0 z-50 bg-[#0a0f0c]/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in"
+          onClick={() => setShowPhotoModal(false)}
+        >
+          <div
+            className="relative bg-[#1c211e] rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-[#e9c349]/40 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-[#e9c349]/20 bg-[#141816]/90 flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-[#0a0f0c] flex items-center justify-center text-[#e9c349] border border-[#e9c349]/30 flex-shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-serif font-bold text-sm sm:text-base text-[#dfe4de] truncate">
+                    MD James Neilen & St. Cletus Choir
+                  </h3>
+                  <p className="text-[10px] sm:text-xs text-[#e9c349] truncate">
+                    Christ the King Parish, Nacho, Bamenda • Sanctuary Gates
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsModalZoomed(!isModalZoomed)}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#262b28] hover:bg-[#313632] text-[#dfe4de] text-xs font-semibold flex items-center gap-1.5 border border-[#e9c349]/25 cursor-pointer transition-colors"
+                  title={isModalZoomed ? 'Zoom out' : 'Zoom in'}
+                >
+                  {isModalZoomed ? (
+                    <>
+                      <ZoomOut className="w-3.5 h-3.5 text-[#e9c349]" />
+                      <span className="hidden sm:inline">Fit</span>
+                    </>
+                  ) : (
+                    <>
+                      <ZoomIn className="w-3.5 h-3.5 text-[#e9c349]" />
+                      <span className="hidden sm:inline">Zoom</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoModal(false)}
+                  className="p-1.5 rounded-full bg-[#0a0f0c] text-[#e9c349] hover:bg-[#8b0014] hover:text-[#dfe4de] transition-colors cursor-pointer border border-[#e9c349]/30"
+                  aria-label="Close photo modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Image Display */}
+            <div className="relative flex-grow overflow-auto p-2 sm:p-4 bg-[#0a0f0c] flex items-center justify-center min-h-[300px]">
+              <div className={`transition-all duration-300 max-h-[70vh] flex items-center justify-center ${isModalZoomed ? 'scale-125 cursor-zoom-out py-10' : 'cursor-zoom-in'}`}
+                onClick={() => setIsModalZoomed(!isModalZoomed)}
+              >
+                <img
+                  src={choirRepertoireUrl}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = choirRepertoireRawUrl;
+                  }}
+                  alt="MD James Neilen and the St. Cletus Choir gathered in front of the parish gates"
+                  className="max-h-[68vh] w-auto object-contain rounded-lg shadow-2xl border border-[#e9c349]/20"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer Caption */}
+            <div className="p-3 sm:p-4 bg-[#141816] border-t border-[#e9c349]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#e2bebc] flex-shrink-0">
+              <p className="italic">
+                “Choristers of St. Cletus Choir and Musical Director MD James Neilen dressed in traditional Toghu and vestments at Christ the King Parish, Nacho.”
+              </p>
+              <span className="px-2.5 py-0.5 rounded bg-[#1f4a3c] text-[#e9c349] text-[10px] font-bold uppercase tracking-wider border border-[#e9c349]/30 flex-shrink-0">
+                18 Voices United in Grace
+              </span>
+            </div>
           </div>
         </div>
       )}
