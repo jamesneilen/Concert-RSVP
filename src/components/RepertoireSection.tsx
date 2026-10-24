@@ -11,8 +11,8 @@ export const RepertoireSection: React.FC = () => {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isModalZoomed, setIsModalZoomed] = useState(false);
 
-  const choirRepertoireUrl = '/assets/st_cletus_choir_repertoire.jpeg';
-  const choirRepertoireRawUrl = '/assets/aistudio/IMG-20260802-WA0015_c8d270af.jpg';
+  const choirRepertoireUrl = '/assets/aistudio/St_Cletus_Mono_6622d814.png';
+  const choirFallbackUrl = '/assets/st_cletus_choir_repertoire.png';
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,18 +82,18 @@ export const RepertoireSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Left: Choirmaster Profile & Audio Player */}
           <div className="lg:col-span-5 bg-[#1c211e] rounded-xl overflow-hidden shadow-2xl flex flex-col border border-[#e9c349]/20">
-            {/* Arranged Choir & Musical Director Photograph at Parish Sanctuary Gates */}
-            <div className="relative h-72 sm:h-84 md:h-96 w-full overflow-hidden bg-[#101412] group">
+            {/* St. Cletus Choir & Musical Director Photograph */}
+            <div className="relative h-80 sm:h-96 md:h-[420px] w-full overflow-hidden bg-black group flex items-center justify-center">
               <img
                 src={choirRepertoireUrl}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = choirRepertoireRawUrl;
+                  (e.target as HTMLImageElement).src = choirFallbackUrl;
                 }}
-                alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda assembled at the parish gates"
-                className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-700 filter brightness-95"
+                alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
+                className="w-full h-full object-cover object-top sm:object-center opacity-75 group-hover:opacity-90 transition-all duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1c211e] via-[#1c211e]/30 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#101412]/75 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1c211e] via-[#1c211e]/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
               {/* Floating Top Left Identity Badge */}
               <div className="absolute top-2.5 sm:top-3.5 left-2.5 sm:left-3.5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#0a0f0c]/85 text-[#e9c349] border border-[#e9c349]/35 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase backdrop-blur-md shadow-lg pointer-events-none">
@@ -150,10 +150,10 @@ export const RepertoireSection: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-serif font-bold text-sm sm:text-base text-[#dfe4de] truncate">
-                        St Joseph Cathedral Choir
+                        St. Francis Xavier Choir
                       </h4>
                       <p className="text-[11px] sm:text-xs text-[#e2bebc]">
-                        Special Guest Choir • St Joseph Cathedral, Bamenda
+                        Special Guest Choir • St. Francis Xavier Parish, Bamenda
                       </p>
                     </div>
                   </div>
@@ -369,7 +369,7 @@ export const RepertoireSection: React.FC = () => {
                     MD James Neilen & St. Cletus Choir
                   </h3>
                   <p className="text-[10px] sm:text-xs text-[#e9c349] truncate">
-                    Christ the King Parish, Nacho, Bamenda • Sanctuary Gates
+                    Christ the King Parish, Nacho, Bamenda • Music Ministry
                   </p>
                 </div>
               </div>
@@ -406,16 +406,16 @@ export const RepertoireSection: React.FC = () => {
             </div>
 
             {/* Modal Image Display */}
-            <div className="relative flex-grow overflow-auto p-2 sm:p-4 bg-[#0a0f0c] flex items-center justify-center min-h-[300px]">
+            <div className="relative flex-grow overflow-auto p-2 sm:p-4 bg-black flex items-center justify-center min-h-[300px]">
               <div className={`transition-all duration-300 max-h-[70vh] flex items-center justify-center ${isModalZoomed ? 'scale-125 cursor-zoom-out py-10' : 'cursor-zoom-in'}`}
                 onClick={() => setIsModalZoomed(!isModalZoomed)}
               >
                 <img
                   src={choirRepertoireUrl}
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = choirRepertoireRawUrl;
+                    (e.target as HTMLImageElement).src = choirFallbackUrl;
                   }}
-                  alt="MD James Neilen and the St. Cletus Choir gathered in front of the parish gates"
+                  alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
                   className="max-h-[68vh] w-auto object-contain rounded-lg shadow-2xl border border-[#e9c349]/20"
                 />
               </div>
@@ -424,7 +424,7 @@ export const RepertoireSection: React.FC = () => {
             {/* Modal Footer Caption */}
             <div className="p-3 sm:p-4 bg-[#141816] border-t border-[#e9c349]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#e2bebc] flex-shrink-0">
               <p className="italic">
-                “Choristers of St. Cletus Choir and Musical Director MD James Neilen dressed in traditional Toghu and vestments at Christ the King Parish, Nacho.”
+                “Choristers of St. Cletus Choir and Musical Director MD James Neilen dressed in traditional Toghu and choral vestments, framed in radiant golden musical notes.”
               </p>
               <span className="px-2.5 py-0.5 rounded bg-[#1f4a3c] text-[#e9c349] text-[10px] font-bold uppercase tracking-wider border border-[#e9c349]/30 flex-shrink-0">
                 18 Voices United in Grace
