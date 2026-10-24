@@ -41,39 +41,42 @@ const defaultRsvps: RsvpEntry[] = [
     id: 'rsvp-1',
     timestamp: '10/18/2026, 4:15:20 PM',
     fullName: 'Dr. Eleanor Vance',
-    tier: 'VIP Benefactor',
+    tier: 'VIP Benefactor (Reserved)',
     guestCount: 2,
     passCode: 'CK-2026-XMAS-7821',
     email: 'e.vance@cameroon-health.org',
     phone: '+237 677 82 91 04',
     seatingZone: 'Reserved Center Nave • Pew A-14',
     prayerIntentions: 'For peace and blessings over Bamenda and families in Christ the King Parish.',
+    photoUrl: '/assets/avatars/avatar_eleanor.jpg',
     status: 'Confirmed • Active',
   },
   {
     id: 'rsvp-2',
     timestamp: '10/19/2026, 11:32:05 AM',
     fullName: 'Pa Julius Fomuso',
-    tier: 'Guild Alumni',
+    tier: 'Choir Alumni',
     guestCount: 4,
     passCode: 'CK-2026-XMAS-4190',
     email: 'j.fomuso@yahoo.com',
     phone: '+237 675 14 30 89',
-    seatingZone: 'Reserved Left Transept • Pew B-02',
+    seatingZone: 'Alumni Choir Wing • Reserved Gallery',
     prayerIntentions: 'Thanksgiving for 30 years of choral fellowship.',
+    photoUrl: '/assets/avatars/avatar_julius.jpg',
     status: 'Confirmed • Active',
   },
   {
     id: 'rsvp-3',
     timestamp: '10/19/2026, 6:48:19 PM',
     fullName: 'Sr. Beatrice Lum',
-    tier: 'Clergy Guest',
+    tier: 'Clergy Guest (Honorary)',
     guestCount: 1,
     passCode: 'CK-2026-XMAS-9032',
     email: 'sr.beatrice@cathedral-diocese.org',
     phone: '+237 672 40 18 22',
-    seatingZone: 'Chancel Guest Sanctuary',
+    seatingZone: 'Honorary Sanctuary Chancel • Presbytery',
     prayerIntentions: 'For vocations and sacred music ministry in the North West Region.',
+    photoUrl: '/assets/avatars/avatar_beatrice.jpg',
     status: 'Confirmed • Active',
   }
 ];
@@ -286,7 +289,8 @@ app.post('/api/settings', (req: Request, res: Response) => {
 });
 
 async function start() {
-  // Serve public audio assets
+  // Serve public static assets (images, avatars, audio)
+  app.use('/assets', express.static(path.resolve(process.cwd(), 'public/assets')));
   app.use('/audio', express.static(path.resolve(process.cwd(), 'public/audio')));
 
   if (process.env.NODE_ENV === 'production') {

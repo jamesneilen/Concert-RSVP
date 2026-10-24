@@ -1,5 +1,5 @@
 import React from 'react';
-import { Church, MapPin, Clock, ShieldCheck, Sparkles, Navigation, Users, Flame } from 'lucide-react';
+import { Church, MapPin, Clock, ShieldCheck, Sparkles, Navigation, Users } from 'lucide-react';
 
 export const LogisticsAndVenue: React.FC = () => {
   return (
@@ -18,8 +18,8 @@ export const LogisticsAndVenue: React.FC = () => {
           </p>
         </div>
 
-        {/* 3 Logistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
+        {/* 2 Logistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
           {/* Card 1 */}
           <div className="bg-[#1c211e] p-5 sm:p-6 rounded-xl border border-[#e9c349]/20 shadow-xl flex flex-col justify-between hover:border-[#e9c349]/40 transition-colors">
             <div>
@@ -57,26 +57,9 @@ export const LogisticsAndVenue: React.FC = () => {
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
           </div>
-
-          {/* Card 3 */}
-          <div className="bg-[#1c211e] p-5 sm:p-6 rounded-xl border border-[#e9c349]/20 shadow-xl flex flex-col justify-between hover:border-[#e9c349]/40 transition-colors">
-            <div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-[#262b28] flex items-center justify-center text-[#ffb3ae] mb-3 sm:mb-4 border border-[#ffb3ae]/20">
-                <Flame className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-[#dfe4de] mb-1.5 sm:mb-2">
-                Choral Presentation & Recording
-              </h3>
-              <p className="text-xs text-[#e2bebc] leading-relaxed mb-4">
-                Protective wax guard tapers are distributed at the entrance for Movement V (<em>Waloyo Yamoni</em>). This performance is being recorded for the Parish Archive; please mute mobile phones.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-[#313632] flex items-center justify-between text-[11px] text-[#ffb3ae] font-semibold">
-              <span>Wax Guard Candles Provided</span>
-              <Sparkles className="w-3.5 h-3.5" />
-            </div>
-          </div>
         </div>
+
+
 
         {/* Sanctuary Location Bar */}
         <div className="bg-[#262b28] p-4 sm:p-6 lg:p-7 rounded-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-[#e9c349]/25">

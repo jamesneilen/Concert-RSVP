@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Library, Sparkles, X, BookOpen, Volume2 } from 'lucide-react';
+import { Play, Pause, Library, Sparkles, X, BookOpen, Volume2, Users, Church } from 'lucide-react';
 import { REPERTOIRE_LIST, RepertoireItem } from '../data/concertData';
 import { sacredAudio } from '../utils/audioSynth';
 
@@ -88,17 +88,35 @@ export const RepertoireSection: React.FC = () => {
                 “Under the theme <span className="text-[#e9c349] font-semibold font-serif">‘Sing Unto God for Christ is Born’</span>, our voices gather in Christ the King Parish to celebrate divine hope, joy, and peace across our community and the world.”
               </p>
 
-              {/* Choral Forces Highlight */}
-              <div className="bg-[#262b28]/80 p-3 sm:p-4 rounded-lg flex flex-col gap-1.5 border border-[#e9c349]/20">
+              {/* Featured Guest Choir Highlight */}
+              <div className="bg-[#262b28]/80 p-3 sm:p-4 rounded-lg flex flex-col gap-2 border border-[#e9c349]/20">
                 <div className="flex items-center justify-between text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
-                  <span>Featured Choral Forces</span>
-                  <span className="px-2 py-0.5 bg-[#0a0f0c] rounded text-[#a3d0be] text-[10px]">
-                    80 Musician Guild
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-[#e9c349]" />
+                    <span>Featured Guest Choir</span>
+                  </span>
+                  <span className="px-2 py-0.5 bg-[#0a0f0c] rounded text-[#a3d0be] text-[10px] border border-[#a3d0be]/20 font-semibold">
+                    Guest Ministration
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-[#dfe4de] leading-relaxed mt-0.5">
-                  Christ the King Parish Choir • Nacho Youth Choristers • Festival Brass Ensemble • Sanctuary Organist
-                </p>
+                <div className="bg-[#181d1a] p-3 rounded-lg border border-[#e9c349]/25 flex items-center justify-between gap-3 hover:border-[#e9c349]/60 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-md bg-[#0a0f0c] flex items-center justify-center text-[#e9c349] border border-[#e9c349]/40 flex-shrink-0 shadow-sm">
+                      <Church className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-serif font-bold text-sm sm:text-base text-[#dfe4de] truncate">
+                        St Joseph Cathedral Choir
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-[#e2bebc]">
+                        Special Guest Choir • St Joseph Cathedral, Bamenda
+                      </p>
+                    </div>
+                  </div>
+                  <span className="hidden sm:inline-block px-2.5 py-1 rounded text-[10px] font-semibold bg-[#e9c349]/10 text-[#e9c349] border border-[#e9c349]/30 flex-shrink-0">
+                    Special Appearance
+                  </span>
+                </div>
               </div>
 
               {/* Mini Audio Player Card */}

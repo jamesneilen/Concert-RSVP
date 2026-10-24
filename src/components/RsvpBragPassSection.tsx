@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toPng } from 'html-to-image';
-import { INITIAL_PATRON, SAMPLE_AVATARS, PatronPassData } from '../data/concertData';
+import { INITIAL_PATRON, SAMPLE_AVATARS, PatronPassData, PATRON_TIERS, PatronTier } from '../data/concertData';
 import { submitRsvpToSpreadsheet } from '../services/rsvpRegistryService';
 import { SocialShareModal } from './SocialShareModal';
 
@@ -218,6 +218,38 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
     setTimeout(() => setShowSuccessToast(false), 6000);
   };
 
+  // Helper to obtain the actual flyer File
+  const getFlyerFile = async (): Promise<File | null> => {
+    if (!flyerCardRef.current) return null;
+    try {
+      const dataUrl = await toPng(flyerCardRef.current, {
+        cacheBust: true,
+        quality: 0.98,
+        pixelRatio: 2,
+      });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const cleanName = formData.fullName.trim().replace(/\s+/g, '_') || 'Patron';
+      return new File([blob], `St_Cletus_Christmas_Flyer_${cleanName}.png`, {
+        type: 'image/png',
+      });
+    } catch (err) {
+      console.warn('Could not generate flyer file:', err);
+      return null;
+    }
+  };
+
+  const flyerCaptionText = `✨ "For Unto Us a Child Is Born, Unto Us a Son Is Given!"
+
+Here is my official personalized pass for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!
+📅 Sunday, Dec 27, 2026 • 1:00 PM WAT
+📍 Christ the King Parish, Nacho, Bamenda
+🎟️ Pass Code: #${formData.passCode}
+👤 Attendee: ${formData.fullName} (${formData.tier})
+
+📞 Concert Inquiries: WhatsApp +237 672 668 334 / Tel: 675360863
+🎟️ Claim your free pass: ${typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?patron=${encodeURIComponent(formData.fullName)}&pass=${encodeURIComponent(formData.passCode)}#rsvp-portal` : ''}`;
+
   // Download pass as PNG
   const handleDownloadFlyer = async () => {
     if (!flyerCardRef.current) return;
@@ -237,15 +269,45 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       link.click();
     } catch (err) {
       console.error('Image export failed:', err);
-      alert(
-        `Personalized Concert Brag Flyer generated for ${formData.fullName}! You can take a screenshot or right-click to save.`
-      );
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // Share flyer
+  // Direct share flyer image with text attached
+  const handleDirectShareFlyer = async (platform?: 'whatsapp' | 'facebook' | 'twitter') => {
+    setIsDownloading(true);
+    try {
+      const file = await getFlyerFile();
+
+      // If mobile Web Share with file is supported, share image + text directly
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.share &&
+        navigator.canShare &&
+        file &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          files: [file],
+          title: `St Cletus Choir Christmas Concert - ${formData.fullName}`,
+          text: flyerCaptionText,
+        });
+        return;
+      }
+
+      // Desktop fallback: open share modal which downloads image and copies caption
+      setShowShareModal(true);
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') {
+        setShowShareModal(true);
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Share flyer modal opener
   const handleShareFlyer = () => {
     setShowShareModal(true);
   };
@@ -263,15 +325,23 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
 
   const getTierColorStyle = () => {
     switch (formData.tier) {
-      case 'VIP Benefactor':
-        return 'bg-[#e9c349] text-[#3c2f00]';
-      case 'Guild Alumni':
-        return 'bg-[#1f4a3c] text-[#a3d0be] border border-[#a3d0be]/40';
-      case 'Clergy Guest':
-        return 'bg-[#8b0014] text-[#dfe4de] border border-[#ffb3ae]/40';
+      case 'VIP Benefactor (Reserved)':
+        return 'bg-[#e9c349] text-[#3c2f00] font-bold shadow-sm';
+      case 'Clergy Guest (Honorary)':
+        return 'bg-[#8b0014] text-[#dfe4de] border border-[#ffb3ae]/40 font-bold';
+      case 'Choir Patron':
+        return 'bg-[#af8d11] text-[#0a0f0c] border border-[#ffe088]/60 font-bold shadow-sm';
+      case 'Choir Alumni':
+        return 'bg-[#1f4a3c] text-[#a3d0be] border border-[#a3d0be]/40 font-bold';
+      case 'General Admission (Free)':
       default:
         return 'bg-[#313632] text-[#dfe4de] border border-[#e9c349]/30';
     }
+  };
+
+  const getTierSeating = () => {
+    const tierInfo = PATRON_TIERS.find((t) => t.id === formData.tier);
+    return tierInfo ? tierInfo.seatingDefault : 'Reserved Seating Granted • Main Sanctuary Nave';
   };
 
   return (
@@ -472,7 +542,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                   {/* Quick Preset Selector for instant testing */}
                   <div className="mt-3 pt-2.5 border-t border-[#313632]/60">
                     <span className="text-[9px] sm:text-[10px] font-bold text-[#e2bebc] uppercase tracking-wider block mb-1.5">
-                      Or Try Preset Parish Guest:
+                      Or Select 3D Character Preset:
                     </span>
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       {SAMPLE_AVATARS.map((av) => (
@@ -480,16 +550,17 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                           key={av.name}
                           type="button"
                           onClick={() => handleSelectPresetAvatar(av.url, av.name)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] sm:text-[11px] transition-all border ${
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] transition-all border cursor-pointer ${
                             formData.fullName === av.name
-                              ? 'bg-[#e9c349]/20 border-[#e9c349] text-[#e9c349] font-bold'
+                              ? 'bg-[#e9c349]/20 border-[#e9c349] text-[#e9c349] font-bold shadow-[0_0_10px_rgba(233,195,73,0.25)]'
                               : 'bg-[#0a0f0c] border-[#313632] text-[#dfe4de] hover:border-[#e9c349]/40'
                           }`}
                         >
                           <img
                             src={av.url}
                             alt={av.name}
-                            className="w-3.5 h-3.5 rounded-full object-cover"
+                            className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-[#e9c349]/40 flex-shrink-0"
+                            referrerPolicy="no-referrer"
                           />
                           <span>{av.name.split(' ')[0]}</span>
                         </button>
@@ -538,9 +609,12 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                       <select
                         value={formData.tier}
                         onChange={(e) => {
+                          const newTier = e.target.value as PatronTier;
+                          const tierInfo = PATRON_TIERS.find((t) => t.id === newTier);
                           const updated = {
                             ...formData,
-                            tier: e.target.value as PatronPassData['tier'],
+                            tier: newTier,
+                            seatingZone: tierInfo ? tierInfo.seatingDefault : formData.seatingZone,
                           };
                           setFormData(updated);
                           onPassChange?.(updated);
@@ -548,11 +622,11 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                         }}
                         className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 rounded-lg text-base sm:text-xs appearance-none focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#e9c349]/30 min-h-[44px]"
                       >
-                        <option value="VIP Benefactor">VIP Benefactor (Reserved)</option>
-                        <option value="General Nave">General Nave (Free)</option>
-                        <option value="Guild Alumni">Guild Alumni (Special)</option>
-                        <option value="Clergy Guest">Clergy Guest (Honorary)</option>
-                        <option value="Choir Patron">Choir Patron (Chancel)</option>
+                        <option value="General Admission (Free)">General Admission (Free)</option>
+                        <option value="VIP Benefactor (Reserved)">VIP Benefactor (Reserved)</option>
+                        <option value="Clergy Guest (Honorary)">Clergy Guest (Honorary)</option>
+                        <option value="Choir Patron">Choir Patron</option>
+                        <option value="Choir Alumni">Choir Alumni</option>
                       </select>
                       <ChevronDown className="w-4 h-4 text-[#e9c349] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
@@ -608,9 +682,21 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                       inputMode="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                      placeholder="+237 677 82 91 04"
+                      placeholder="675360863 or 672668334"
                       className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2 rounded-lg text-base sm:text-xs focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#313632] min-h-[44px]"
                     />
+                    <p className="text-[10px] text-[#e2bebc] mt-1">
+                      Inquiries? Chat via WhatsApp:{' '}
+                      <a
+                        href="https://wa.me/237672668334?text=Hello%20St.%20Cletus%20Choir%2C%20I%20have%20an%20inquiry%20regarding%20the%20Sing%20Unto%20God%20Christmas%20Concert%20at%20Christ%20the%20King%20Parish"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#e9c349] font-bold hover:underline"
+                      >
+                        +237 672 668 334
+                      </a>{' '}
+                      or call 675360863
+                    </p>
                   </div>
                 </div>
 
@@ -746,7 +832,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                   {formData.fullName || 'Honored Parish Guest'}
                 </div>
                 <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5">
-                  Reserved Seating Granted • Main Sanctuary Nave
+                  {getTierSeating()}
                 </p>
 
                 {/* Venue Notice in Card */}
@@ -826,11 +912,12 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleShareFlyer}
-                  className="py-3 sm:py-2.5 px-4 bg-[#313632] text-[#e9c349] rounded-lg text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 hover:bg-[#353a37] transition-all border border-[#e9c349]/30 cursor-pointer min-h-[44px]"
+                  onClick={() => handleDirectShareFlyer()}
+                  disabled={isDownloading}
+                  className="py-3 sm:py-2.5 px-4 bg-gradient-to-r from-[#8b0014] to-[#a00018] hover:from-[#a00018] hover:to-[#b4262c] text-[#dfe4de] rounded-lg text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-all border border-[#e9c349]/50 shadow-[0_0_15px_rgba(139,0,20,0.35)] cursor-pointer min-h-[44px]"
                 >
-                  <Share2 className="w-4 h-4" />
-                  <span>Social Share Suite</span>
+                  <Share2 className="w-4 h-4 text-[#e9c349]" />
+                  <span>Share Flyer (Image + Text)</span>
                 </button>
               </div>
 
@@ -839,62 +926,58 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] sm:text-[11px] font-bold text-[#e9c349] uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#e9c349]" />
-                    <span>Share Directly To:</span>
+                    <span>Send Actual Flyer To:</span>
                   </span>
-                  <span className="text-[10px] text-[#e2bebc]/80">1-Tap Direct</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowShareModal(true)}
+                    className="text-[10px] text-[#e9c349] hover:underline cursor-pointer font-semibold"
+                  >
+                    More Options →
+                  </button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {/* WhatsApp */}
-                  <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                      `✨ I just reserved my ${formData.tier} seat for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!\n\n📅 Sunday, Dec 27, 2026 • 1:00 PM WAT\n📍 Christ the King Parish, Nacho, Bamenda\n🎟️ Pass Code: #${formData.passCode}\n👤 Attendee: ${formData.fullName}\n\nClaim your personalized keepsake brag pass here:\n${typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?patron=${encodeURIComponent(formData.fullName)}&pass=${encodeURIComponent(formData.passCode)}#rsvp-portal` : ''}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2.5 px-2 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer text-decoration-none min-h-[38px]"
-                    title="Share to WhatsApp"
+                  <button
+                    type="button"
+                    onClick={() => handleDirectShareFlyer('whatsapp')}
+                    disabled={isDownloading}
+                    className="py-2.5 px-2 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
+                    title="Share actual flyer to WhatsApp"
                   >
                     <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
                       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                     </svg>
                     <span>WhatsApp</span>
-                  </a>
+                  </button>
 
                   {/* Facebook */}
-                  <a
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                      typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?patron=${encodeURIComponent(formData.fullName)}&pass=${encodeURIComponent(formData.passCode)}#rsvp-portal` : ''
-                    )}&quote=${encodeURIComponent(
-                      `✨ I'm attending "Sing Unto God for Christ is Born" with St Cletus Choir at Christ the King Parish, Nacho, Bamenda! Claim your personalized brag pass here:`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2.5 px-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer text-decoration-none min-h-[38px]"
+                  <button
+                    type="button"
+                    onClick={() => handleDirectShareFlyer('facebook')}
+                    disabled={isDownloading}
+                    className="py-2.5 px-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
                     title="Share to Facebook"
                   >
                     <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
                     <span>Facebook</span>
-                  </a>
+                  </button>
 
                   {/* Twitter / X */}
-                  <a
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                      `I just claimed my personalized brag pass for "Sing Unto God for Christ is Born" with St Cletus Choir at Christ the King Parish, Nacho, Bamenda! 🎶 Join us:`
-                    )}&url=${encodeURIComponent(
-                      typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?patron=${encodeURIComponent(formData.fullName)}&pass=${encodeURIComponent(formData.passCode)}#rsvp-portal` : ''
-                    )}&hashtags=StCletusChoir,ChristmasConcert,NachoBamenda,SingUntoGod`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2.5 px-2 bg-black hover:bg-neutral-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 border border-neutral-700 cursor-pointer text-decoration-none min-h-[38px]"
+                  <button
+                    type="button"
+                    onClick={() => handleDirectShareFlyer('twitter')}
+                    disabled={isDownloading}
+                    className="py-2.5 px-2 bg-black hover:bg-neutral-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 border border-neutral-700 cursor-pointer min-h-[38px] disabled:opacity-50"
                     title="Share to Twitter / X"
                   >
                     <svg className="w-3.5 h-3.5 fill-current flex-shrink-0" viewBox="0 0 24 24">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                     <span>Twitter (X)</span>
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -951,6 +1034,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
         onClose={() => setShowShareModal(false)}
         patron={formData}
         onDownloadImage={handleDownloadFlyer}
+        getFlyerFile={getFlyerFile}
       />
     </section>
   );

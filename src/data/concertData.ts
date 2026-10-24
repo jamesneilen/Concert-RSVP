@@ -10,11 +10,64 @@ export interface RepertoireItem {
   lyricsSnippet?: string;
 }
 
+export type PatronTier =
+  | 'General Admission (Free)'
+  | 'VIP Benefactor (Reserved)'
+  | 'Clergy Guest (Honorary)'
+  | 'Choir Patron'
+  | 'Choir Alumni';
+
+export interface PatronTierInfo {
+  id: PatronTier;
+  label: string;
+  badgeStyle: string;
+  seatingDefault: string;
+  description: string;
+}
+
+export const PATRON_TIERS: PatronTierInfo[] = [
+  {
+    id: 'General Admission (Free)',
+    label: 'General Admission (Free)',
+    badgeStyle: 'bg-[#313632] text-[#dfe4de] border border-[#e9c349]/30',
+    seatingDefault: 'Main Sanctuary Nave • Open Seating',
+    description: 'Complimentary admission for all parish faithful and community visitors.',
+  },
+  {
+    id: 'VIP Benefactor (Reserved)',
+    label: 'VIP Benefactor (Reserved)',
+    badgeStyle: 'bg-[#e9c349] text-[#3c2f00] font-bold shadow-sm',
+    seatingDefault: 'Reserved Center Nave • Pew A-14',
+    description: 'Reserved prime seating honoring distinguished concert benefactors and donors.',
+  },
+  {
+    id: 'Clergy Guest (Honorary)',
+    label: 'Clergy Guest (Honorary)',
+    badgeStyle: 'bg-[#8b0014] text-[#dfe4de] border border-[#ffb3ae]/40 font-bold',
+    seatingDefault: 'Honorary Sanctuary Chancel • Presbytery',
+    description: 'Honorary chancel seating reserved for Priests, Religious, and diocesan guests.',
+  },
+  {
+    id: 'Choir Patron',
+    label: 'Choir Patron',
+    badgeStyle: 'bg-[#af8d11] text-[#0a0f0c] border border-[#ffe088]/60 font-bold shadow-sm',
+    seatingDefault: 'Patron Chancel Circle • Reserved Front Pews',
+    description: 'Special reserved seating honoring devoted sponsors and friends of St. Cletus Choir.',
+  },
+  {
+    id: 'Choir Alumni',
+    label: 'Choir Alumni',
+    badgeStyle: 'bg-[#1f4a3c] text-[#a3d0be] border border-[#a3d0be]/40 font-bold',
+    seatingDefault: 'Alumni Choir Wing • Reserved Gallery',
+    description: 'Special seating honoring former choristers and past members of St. Cletus Choir.',
+  },
+];
+
 export interface PatronPassData {
   fullName: string;
   email: string;
   phone: string;
-  tier: 'VIP Benefactor' | 'General Nave' | 'Guild Alumni' | 'Clergy Guest' | 'Choir Patron';
+  tier: PatronTier;
   guestCount: number;
   seatingZone: string;
   passCode: string;
@@ -95,30 +148,34 @@ export const REPERTOIRE_LIST: RepertoireItem[] = [
 export const INITIAL_PATRON: PatronPassData = {
   fullName: 'Dr. Eleanor Vance',
   email: 'e.vance@cameroon-health.org',
-  phone: '+237 677 82 91 04',
-  tier: 'VIP Benefactor',
+  phone: '+237 675 360 863',
+  tier: 'VIP Benefactor (Reserved)',
   guestCount: 2,
   seatingZone: 'Reserved Center Nave • Pew A-14',
   passCode: 'CK-2026-XMAS-7821',
-  photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+  photoUrl: '/assets/avatars/avatar_eleanor.jpg',
   prayerIntentions: 'For peace and blessings over Bamenda and families in Christ the King Parish.'
 };
 
 export const SAMPLE_AVATARS = [
   {
     name: 'Dr. Eleanor Vance',
-    url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80'
+    url: '/assets/avatars/avatar_eleanor.jpg'
   },
   {
     name: 'Pa Julius Fomuso',
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'
+    url: '/assets/avatars/avatar_julius.jpg'
   },
   {
     name: 'Sr. Beatrice Lum',
-    url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'
+    url: '/assets/avatars/avatar_beatrice.jpg'
   },
   {
     name: 'Che Emmanuel',
-    url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80'
+    url: '/assets/avatars/avatar_emmanuel.jpg'
+  },
+  {
+    name: 'Mbah Collette',
+    url: '/assets/avatars/avatar_collette.jpg'
   }
 ];
