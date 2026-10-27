@@ -31,6 +31,11 @@
   --color-ivory-variant: #e2bebc;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #101412;

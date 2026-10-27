@@ -27,11 +27,13 @@ import { SocialShareModal } from './SocialShareModal';
 interface RsvpBragPassSectionProps {
   onPassConfirmed?: (pass: PatronPassData) => void;
   onPassChange?: (pass: PatronPassData) => void;
+  onOpenSyncModal?: () => void;
 }
 
 export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   onPassConfirmed,
   onPassChange,
+  onOpenSyncModal,
 }) => {
   const [formData, setFormData] = useState<PatronPassData>(INITIAL_PATRON);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -345,7 +347,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
   };
 
   return (
-    <section id="rsvp-portal" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#101412] relative overflow-hidden">
+    <section id="rsvp-portal" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#101412] relative overflow-hidden scroll-mt-20 sm:scroll-mt-24">
       {/* Decorative Ambient Halo Behind Flyer */}
       <div className="absolute right-6 top-1/2 -translate-y-1/2 w-72 sm:w-96 h-72 sm:h-96 bg-[#8b0014]/20 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
       <div className="absolute left-6 bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-[#af8d11]/15 rounded-full blur-[90px] sm:blur-[120px] pointer-events-none" />
@@ -729,10 +731,21 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
             </div>
 
             <div className="mt-5 pt-3.5 border-t border-[#313632]/50 flex items-center justify-between text-[#e2bebc] text-[11px] sm:text-xs">
-              <span className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#e9c349]" />
-                <span>Encrypted Parish Registry</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#e9c349]" />
+                  <span>Encrypted Parish Registry</span>
+                </span>
+                {onOpenSyncModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenSyncModal}
+                    className="text-[#e9c349] hover:underline font-semibold ml-2 text-[10px] sm:text-[11px] flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>(Google Sheet Diagnostics)</span>
+                  </button>
+                )}
+              </div>
               <span className="text-[#e9c349] font-semibold">100% Free Admission</span>
             </div>
           </div>

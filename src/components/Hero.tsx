@@ -61,7 +61,7 @@ export const Hero: React.FC = () => {
   return (
     <section
       id="hero-section"
-      className="relative w-full pt-28 sm:pt-34 lg:pt-38 pb-16 sm:pb-24 lg:pb-28 px-3 sm:px-6 lg:px-12 overflow-hidden flex flex-col justify-center items-center min-h-[90vh]"
+      className="relative w-full pt-28 sm:pt-34 lg:pt-38 pb-16 sm:pb-24 lg:pb-28 px-3 sm:px-6 lg:px-12 overflow-hidden flex flex-col justify-center items-center min-h-[90vh] scroll-mt-20 sm:scroll-mt-24"
     >
       {/* Background with Reduced Opacity and Deep Liturgical Scrims */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">

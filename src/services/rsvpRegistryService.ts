@@ -25,6 +25,8 @@ export interface RsvpResponse {
   hasWebhook?: boolean;
 }
 
+export const GOOGLE_SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyjc64Hrj0__ptUfvGv-vOsN3Yj18iePH6qO1DkRh589-wiNDWrG4rNvcWT1AFM-6KWOw/exec';
+
 const LOCAL_STORAGE_BACKUP = 'st_cletus_rsvps_local_backup';
 
 /**
@@ -59,6 +61,31 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
   } catch (e) {
     console.warn('Local storage write error:', e);
   }
+
+  // Also dispatch direct client-side webhook request
+  try {
+    fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        timestamp: newLocalItem.timestamp,
+        fullName: patron.fullName,
+        name: patron.fullName,
+        tier: patron.tier,
+        guestCount: patron.guestCount,
+        guests: patron.guestCount,
+        passCode: patron.passCode,
+        code: patron.passCode,
+        email: patron.email || 'N/A',
+        phone: patron.phone || 'N/A',
+        seatingZone: patron.seatingZone,
+        prayerIntentions: patron.prayerIntentions || 'None',
+        specialRequests: patron.prayerIntentions || 'None',
+        status: 'Confirmed • Active',
+      }),
+    }).catch(() => {});
+  } catch (_) {}
 
   // Submit to backend server endpoint /api/rsvp
   try {

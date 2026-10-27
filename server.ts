@@ -102,16 +102,19 @@ function saveRsvps(entries: RsvpEntry[]) {
   }
 }
 
+const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyjc64Hrj0__ptUfvGv-vOsN3Yj18iePH6qO1DkRh589-wiNDWrG4rNvcWT1AFM-6KWOw/exec';
+
 function loadConfig(): { googleSheetWebhookUrl?: string } {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      const parsed = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      if (parsed && parsed.googleSheetWebhookUrl) return parsed;
     }
   } catch (err) {
     console.error('Error reading config.json:', err);
   }
   return {
-    googleSheetWebhookUrl: process.env.GOOGLE_SHEET_WEBHOOK_URL || '',
+    googleSheetWebhookUrl: process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL,
   };
 }
 
@@ -127,33 +130,86 @@ let rsvps: RsvpEntry[] = loadRsvps();
 let config = loadConfig();
 
 // Forward entry to Google Sheet webhook if configured (Google Apps Script Web App)
-async function forwardToGoogleSheetWebhook(entry: RsvpEntry) {
-  const webhookUrl = config.googleSheetWebhookUrl || process.env.GOOGLE_SHEET_WEBHOOK_URL;
-  if (!webhookUrl) return;
+async function forwardToGoogleSheetWebhook(entry: RsvpEntry): Promise<{
+  success: boolean;
+  status?: number;
+  message?: string;
+  error?: string;
+  authRequired?: boolean;
+  rawResponse?: string;
+  details?: any;
+}> {
+  const webhookUrl = config.googleSheetWebhookUrl || process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
+  if (!webhookUrl) return { success: false, error: 'No webhook URL configured' };
 
   try {
     const payload = {
       timestamp: entry.timestamp,
       fullName: entry.fullName,
+      name: entry.fullName,
       tier: entry.tier,
       guestCount: entry.guestCount,
+      guests: entry.guestCount,
       passCode: entry.passCode,
+      code: entry.passCode,
       email: entry.email,
       phone: entry.phone,
       seatingZone: entry.seatingZone,
       prayerIntentions: entry.prayerIntentions,
+      specialRequests: entry.prayerIntentions,
       status: entry.status,
     };
 
-    await fetch(webhookUrl, {
+    // Google Apps Script Web Apps prefer text/plain for postData parsing without CORS preflight issues
+    const res = await fetch(webhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload),
       redirect: 'follow',
     });
-    console.log(`[Google Sheet] Synced RSVP for ${entry.fullName} to webhook.`);
-  } catch (err) {
-    console.warn('[Google Sheet] Webhook forward failed:', err);
+
+    const isRedirectToLogin = res.url && res.url.includes('accounts.google.com');
+
+    if (res.status === 401 || isRedirectToLogin) {
+      console.warn(`[Google Sheet Webhook Auth Warning] Webhook returned HTTP ${res.status} or redirected to Google Sign-in. In Google Apps Script, make sure Deploy > Manage Deployments > 'Who has access' is set to 'Anyone'.`);
+      return {
+        success: false,
+        status: res.status,
+        authRequired: true,
+        error: "Google Apps Script deployment requires setting 'Who has access' to 'Anyone' in Deploy > Manage Deployments.",
+      };
+    }
+
+    const text = await res.text();
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(text);
+    } catch (_) {}
+
+    if (res.ok) {
+      if (parsed && parsed.result === 'error') {
+        console.warn(`[Google Sheet Error Response]`, parsed.message || text);
+        return {
+          success: false,
+          status: res.status,
+          error: parsed.message || 'Google Apps Script reported an error',
+          rawResponse: text,
+        };
+      }
+      console.log(`[Google Sheet] Synced RSVP for ${entry.fullName}:`, text.slice(0, 100));
+      return {
+        success: true,
+        status: res.status,
+        message: 'Synced to Google Sheet',
+        details: parsed || text,
+      };
+    } else {
+      console.warn(`[Google Sheet] Webhook returned status ${res.status}:`, text.substring(0, 200));
+      return { success: false, status: res.status, error: text.substring(0, 200) };
+    }
+  } catch (err: any) {
+    console.warn('[Google Sheet] Webhook forward error:', err);
+    return { success: false, error: err?.message || 'Network error' };
   }
 }
 
@@ -165,11 +221,50 @@ app.get('/api/rsvps', (_req: Request, res: Response) => {
     count: rsvps.length,
     totalSeats: rsvps.reduce((acc, curr) => acc + (curr.guestCount || 1), 0),
     rsvps,
-    hasWebhook: !!(config.googleSheetWebhookUrl || process.env.GOOGLE_SHEET_WEBHOOK_URL),
+    hasWebhook: !!(config.googleSheetWebhookUrl || process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL),
+    webhookUrl: config.googleSheetWebhookUrl || DEFAULT_WEBHOOK_URL,
   });
 });
 
-// 2. POST /api/rsvp - submit new patron RSVP & update the sheet
+// 2. POST /api/webhook/test - test Google Apps Script connectivity
+app.post('/api/webhook/test', async (_req: Request, res: Response) => {
+  const testEntry: RsvpEntry = {
+    id: `test-${Date.now()}`,
+    timestamp: new Date().toLocaleString(),
+    fullName: 'Webhook Test Entry',
+    tier: 'VIP Benefactor',
+    guestCount: 1,
+    passCode: 'CK-TEST-DIAG',
+    email: 'test@example.com',
+    phone: '+237 672 668 334',
+    seatingZone: 'Center Nave',
+    prayerIntentions: 'Testing Google Sheet sync connection',
+    status: 'Confirmed',
+  };
+  const result = await forwardToGoogleSheetWebhook(testEntry);
+  res.json({
+    webhookUrl: config.googleSheetWebhookUrl || DEFAULT_WEBHOOK_URL,
+    result,
+  });
+});
+
+// 2b. POST /api/rsvps/sync-all - push all registered patrons to Google Sheet
+app.post('/api/rsvps/sync-all', async (_req: Request, res: Response) => {
+  const syncResults = [];
+  for (const entry of rsvps) {
+    const resSync = await forwardToGoogleSheetWebhook(entry);
+    syncResults.push({ name: entry.fullName, passCode: entry.passCode, success: resSync.success, error: resSync.error });
+  }
+  res.json({
+    success: true,
+    message: `Attempted sync of ${rsvps.length} entries to Google Sheet.`,
+    total: rsvps.length,
+    synced: syncResults.filter((r) => r.success).length,
+    details: syncResults,
+  });
+});
+
+// 3. POST /api/rsvp - submit new patron RSVP & update the sheet
 app.post('/api/rsvp', async (req: Request, res: Response) => {
   const {
     fullName,
@@ -213,15 +308,18 @@ app.post('/api/rsvp', async (req: Request, res: Response) => {
 
   saveRsvps(rsvps);
 
-  // Silently trigger background sync to Google Sheet webhook if enabled
-  forwardToGoogleSheetWebhook(newEntry);
+  // Trigger sync to Google Sheet webhook
+  const webhookResult = await forwardToGoogleSheetWebhook(newEntry);
 
   res.status(200).json({
     success: true,
-    message: `Attendee ${newEntry.fullName} recorded in the official spreadsheet registry.`,
+    message: webhookResult.success
+      ? `Attendee ${newEntry.fullName} recorded & synced to Google Sheet registry!`
+      : `Attendee ${newEntry.fullName} recorded in attendee registry.${webhookResult.authRequired ? " Note: Google Sheet permissions require 'Who has access: Anyone' in Apps Script." : ""}`,
     entry: newEntry,
     count: rsvps.length,
     totalSeats: rsvps.reduce((acc, curr) => acc + (curr.guestCount || 1), 0),
+    webhookResult,
   });
 });
 

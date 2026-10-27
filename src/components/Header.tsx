@@ -10,6 +10,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'hero-section' | 'program-section' | 'rsvp-portal' | 'venue-section'>('hero-section');
 
   useEffect(() => {
     const unsub = sacredAudio.init((playing) => {
@@ -17,6 +18,48 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
     });
     return () => unsub();
   }, []);
+
+  // Track active section as user scrolls
+  useEffect(() => {
+    const sectionIds = ['hero-section', 'program-section', 'rsvp-portal', 'venue-section'];
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 140;
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const id = sectionIds[i];
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPos >= top) {
+            setActiveSection(id as any);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    setMobileMenuOpen(false);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 90;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+      if (window.history.pushState) {
+        window.history.pushState(null, '', `#${sectionId}`);
+      }
+    }
+  };
 
   const toggleSacredAudio = () => {
     const playing = sacredAudio.toggle();
@@ -46,7 +89,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
       {/* Main navigation */}
       <div className="h-16 sm:h-20 max-w-7xl mx-auto px-3 sm:px-6 lg:px-12 flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand */}
-        <a href="#" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+        <a
+          href="#hero-section"
+          onClick={(e) => scrollToSection('hero-section', e)}
+          className="flex items-center gap-2 sm:gap-3 group min-w-0 cursor-pointer"
+        >
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#1c211e] flex items-center justify-center text-[#e9c349] border border-[#e9c349]/30 shadow-md group-hover:border-[#e9c349] transition-all flex-shrink-0">
             <Church className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
@@ -64,25 +111,48 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
         <nav className="hidden xl:flex items-center gap-8 text-[13px] tracking-wider uppercase font-semibold">
           <a
             href="#hero-section"
-            className="text-[#e9c349] border-b-2 border-[#e9c349] pb-1 transition-colors"
+            onClick={(e) => scrollToSection('hero-section', e)}
+            className={`pb-1 transition-all ${
+              activeSection === 'hero-section'
+                ? 'text-[#e9c349] border-b-2 border-[#e9c349] font-bold'
+                : 'text-[#e2bebc] hover:text-[#dfe4de] border-b-2 border-transparent'
+            }`}
           >
             The Concert
           </a>
           <a
             href="#program-section"
-            className="text-[#e2bebc] hover:text-[#dfe4de] transition-colors pb-1"
+            onClick={(e) => scrollToSection('program-section', e)}
+            className={`pb-1 transition-all ${
+              activeSection === 'program-section'
+                ? 'text-[#e9c349] border-b-2 border-[#e9c349] font-bold'
+                : 'text-[#e2bebc] hover:text-[#dfe4de] border-b-2 border-transparent'
+            }`}
           >
             Program & Carols
           </a>
           <a
             href="#rsvp-portal"
-            className="text-[#e2bebc] hover:text-[#dfe4de] transition-colors pb-1"
+            onClick={(e) => {
+              scrollToSection('rsvp-portal', e);
+              onOpenRsvp();
+            }}
+            className={`pb-1 transition-all ${
+              activeSection === 'rsvp-portal'
+                ? 'text-[#e9c349] border-b-2 border-[#e9c349] font-bold'
+                : 'text-[#e2bebc] hover:text-[#dfe4de] border-b-2 border-transparent'
+            }`}
           >
             Claim Brag Pass
           </a>
           <a
             href="#venue-section"
-            className="text-[#e2bebc] hover:text-[#dfe4de] transition-colors pb-1"
+            onClick={(e) => scrollToSection('venue-section', e)}
+            className={`pb-1 transition-all ${
+              activeSection === 'venue-section'
+                ? 'text-[#e9c349] border-b-2 border-[#e9c349] font-bold'
+                : 'text-[#e2bebc] hover:text-[#dfe4de] border-b-2 border-transparent'
+            }`}
           >
             Sanctuary & Venue
           </a>
@@ -126,8 +196,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
           {/* Primary CTA (Responsive on mobile) */}
           <a
             href="#rsvp-portal"
-            onClick={onOpenRsvp}
-            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-[#8b0014] text-[#dfe4de] hover:bg-[#b4262c] font-semibold text-xs tracking-wider uppercase rounded-lg border border-[#e9c349] shadow-[0_0_16px_rgba(233,195,73,0.25)] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            onClick={(e) => {
+              scrollToSection('rsvp-portal', e);
+              onOpenRsvp();
+            }}
+            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-[#8b0014] text-[#dfe4de] hover:bg-[#b4262c] font-semibold text-xs tracking-wider uppercase rounded-lg border border-[#e9c349] shadow-[0_0_16px_rgba(233,195,73,0.25)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#e9c349]" />
             <span className="hidden sm:inline">RSVP & Get Your Pass</span>
@@ -138,7 +211,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
           <button
             onClick={onOpenPassModal}
             title="View Your Personalized Brag Pass"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#ffb3ae] hover:bg-[#ffe088] transition-colors flex items-center justify-center shadow-sm text-[#410005] font-bold flex-shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#ffb3ae] hover:bg-[#ffe088] transition-colors flex items-center justify-center shadow-sm text-[#410005] font-bold flex-shrink-0 cursor-pointer"
           >
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
@@ -146,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
           {/* Mobile menu hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-1.5 sm:p-2 text-[#e9c349] hover:text-[#ffe088] rounded-md focus:outline-none"
+            className="xl:hidden p-1.5 sm:p-2 text-[#e9c349] hover:text-[#ffe088] rounded-md focus:outline-none cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -159,35 +232,43 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
         <div className="xl:hidden bg-[#101412] border-b border-[#e9c349]/30 px-4 sm:px-6 py-5 flex flex-col gap-3 text-xs sm:text-sm font-semibold tracking-wider uppercase shadow-2xl animate-in slide-in-from-top-2">
           <a
             href="#hero-section"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2.5 text-[#e9c349] py-2 border-b border-[#313632]"
+            onClick={(e) => scrollToSection('hero-section', e)}
+            className={`flex items-center gap-2.5 py-2 border-b border-[#313632] transition-colors ${
+              activeSection === 'hero-section' ? 'text-[#e9c349] font-bold' : 'text-[#dfe4de]'
+            }`}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-[#e9c349]" />
             <span>The Concert</span>
           </a>
           <a
             href="#program-section"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2.5 text-[#dfe4de] hover:text-[#e9c349] py-2 border-b border-[#313632]"
+            onClick={(e) => scrollToSection('program-section', e)}
+            className={`flex items-center gap-2.5 py-2 border-b border-[#313632] transition-colors ${
+              activeSection === 'program-section' ? 'text-[#e9c349] font-bold' : 'text-[#dfe4de]'
+            }`}
           >
             <Music className="w-4 h-4 text-[#e9c349]" />
             <span>Program & Carols</span>
           </a>
           <a
             href="#rsvp-portal"
-            onClick={() => {
-              setMobileMenuOpen(false);
+            onClick={(e) => {
+              scrollToSection('rsvp-portal', e);
               onOpenRsvp();
             }}
-            className="flex items-center gap-2.5 text-[#dfe4de] hover:text-[#e9c349] py-2 border-b border-[#313632]"
+            className={`flex items-center gap-2.5 py-2 border-b border-[#313632] transition-colors ${
+              activeSection === 'rsvp-portal' ? 'text-[#e9c349] font-bold' : 'text-[#dfe4de]'
+            }`}
           >
             <Ticket className="w-4 h-4 text-[#e9c349]" />
             <span>Claim Brag Pass</span>
           </a>
           <a
             href="#venue-section"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2.5 text-[#dfe4de] hover:text-[#e9c349] py-2 border-b border-[#313632]"
+            onClick={(e) => scrollToSection('venue-section', e)}
+            className={`flex items-center gap-2.5 py-2 border-b border-[#313632] transition-colors ${
+              activeSection === 'venue-section' ? 'text-[#e9c349] font-bold' : 'text-[#dfe4de]'
+            }`}
           >
             <MapPin className="w-4 h-4 text-[#e9c349]" />
             <span>Sanctuary & Venue</span>

@@ -60,7 +60,7 @@ export const RepertoireSection: React.FC = () => {
   };
 
   return (
-    <section id="program-section" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#0a0f0c]">
+    <section id="program-section" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#0a0f0c] scroll-mt-20 sm:scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 mb-8 sm:mb-12">
@@ -82,14 +82,14 @@ export const RepertoireSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Left: Choirmaster Profile & Audio Player */}
           <div className="lg:col-span-5 bg-[#1c211e] rounded-xl overflow-hidden shadow-2xl flex flex-col border border-[#e9c349]/20">
-            {/* St. Cletus Choir & Musical Director Photograph */}
+            {/* St. Cletus Choir Photograph */}
             <div className="relative h-80 sm:h-96 md:h-[420px] w-full overflow-hidden bg-black group flex items-center justify-center">
               <img
                 src={choirRepertoireUrl}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = choirFallbackUrl;
                 }}
-                alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
+                alt="The St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
                 className="w-full h-full object-cover object-top sm:object-center opacity-75 group-hover:opacity-90 transition-all duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1c211e] via-[#1c211e]/20 to-transparent pointer-events-none" />
@@ -98,7 +98,7 @@ export const RepertoireSection: React.FC = () => {
               {/* Floating Top Left Identity Badge */}
               <div className="absolute top-2.5 sm:top-3.5 left-2.5 sm:left-3.5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#0a0f0c]/85 text-[#e9c349] border border-[#e9c349]/35 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase backdrop-blur-md shadow-lg pointer-events-none">
                 <Users className="w-3 h-3 text-[#e9c349] flex-shrink-0" />
-                <span>Musical Director & Choristers</span>
+                <span>St. Cletus Choristers</span>
               </div>
 
               {/* Floating Top Right Expand Button */}
@@ -115,10 +115,10 @@ export const RepertoireSection: React.FC = () => {
               {/* Bottom Caption Overlay */}
               <div className="absolute bottom-2.5 sm:bottom-3.5 left-3 sm:left-4 right-3 sm:right-4 pointer-events-none">
                 <span className="px-2 py-0.5 rounded bg-[#1f4a3c]/90 text-[#e9c349] text-[9px] sm:text-[10px] font-bold tracking-wider uppercase border border-[#e9c349]/30 inline-block mb-1">
-                  Music Ministry Leadership
+                  Parish Music Ministry
                 </span>
                 <h3 className="font-serif text-lg sm:text-2xl font-bold text-[#dfe4de] drop-shadow leading-tight">
-                  MD James Neilen & St. Cletus Choir
+                  St. Cletus Choir
                 </h3>
                 <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5 flex items-center gap-1.5">
                   <Church className="w-3 h-3 text-[#e9c349] flex-shrink-0" />
@@ -366,7 +366,7 @@ export const RepertoireSection: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-serif font-bold text-sm sm:text-base text-[#dfe4de] truncate">
-                    MD James Neilen & St. Cletus Choir
+                    St. Cletus Choir
                   </h3>
                   <p className="text-[10px] sm:text-xs text-[#e9c349] truncate">
                     Christ the King Parish, Nacho, Bamenda • Music Ministry
@@ -415,7 +415,7 @@ export const RepertoireSection: React.FC = () => {
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = choirFallbackUrl;
                   }}
-                  alt="MD James Neilen and the St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
+                  alt="The St. Cletus Choir of Christ the King Parish, Nacho, Bamenda"
                   className="max-h-[68vh] w-auto object-contain rounded-lg shadow-2xl border border-[#e9c349]/20"
                 />
               </div>
@@ -424,7 +424,7 @@ export const RepertoireSection: React.FC = () => {
             {/* Modal Footer Caption */}
             <div className="p-3 sm:p-4 bg-[#141816] border-t border-[#e9c349]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#e2bebc] flex-shrink-0">
               <p className="italic">
-                “Choristers of St. Cletus Choir and Musical Director MD James Neilen dressed in traditional Toghu and choral vestments, framed in radiant golden musical notes.”
+                “Choristers of St. Cletus Choir dressed in traditional Toghu and choral vestments, framed in radiant golden musical notes.”
               </p>
               <span className="px-2.5 py-0.5 rounded bg-[#1f4a3c] text-[#e9c349] text-[10px] font-bold uppercase tracking-wider border border-[#e9c349]/30 flex-shrink-0">
                 18 Voices United in Grace

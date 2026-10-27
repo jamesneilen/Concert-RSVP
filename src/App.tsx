@@ -8,16 +8,29 @@ import { Footer } from './components/Footer';
 import { INITIAL_PATRON, PatronPassData } from './data/concertData';
 import { X, Sparkles, Church, QrCode, Share2 } from 'lucide-react';
 import { SocialShareModal } from './components/SocialShareModal';
+import { SpreadsheetSyncModal } from './components/SpreadsheetSyncModal';
 
 export default function App() {
   const [currentPass, setCurrentPass] = useState<PatronPassData>(INITIAL_PATRON);
   const [showPassModal, setShowPassModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   const handleOpenRsvp = () => {
     const el = document.getElementById('rsvp-portal');
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      const headerOffset = 90;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+      // Focus on the first input inside the form for convenience
+      const nameInput = document.getElementById('rsvp-name') as HTMLInputElement;
+      if (nameInput) {
+        setTimeout(() => nameInput.focus(), 400);
+      }
     }
   };
 
@@ -44,6 +57,7 @@ export default function App() {
         <RsvpBragPassSection
           onPassConfirmed={handlePassConfirmed}
           onPassChange={handlePassConfirmed}
+          onOpenSyncModal={() => setShowSyncModal(true)}
         />
 
         {/* Sanctuary & Venue Arrival Logistics */}
@@ -51,7 +65,7 @@ export default function App() {
       </main>
 
       {/* Liturgical Footer */}
-      <Footer />
+      <Footer onOpenSyncModal={() => setShowSyncModal(true)} />
 
       {/* Floating Action Button (FAB) for WhatsApp Inquiries */}
       <aside aria-label="Quick WhatsApp Inquiries" className="fixed bottom-5 sm:bottom-6 right-4 sm:right-6 z-50">
@@ -190,6 +204,12 @@ export default function App() {
           setShowShareModal(false);
           handleOpenRsvp();
         }}
+      />
+
+      {/* Google Sheet Sync & Attendees Diagnostic Suite Modal */}
+      <SpreadsheetSyncModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { Church, MapPin, Clock, ShieldCheck, Sparkles, Navigation, Users } from 
 
 export const LogisticsAndVenue: React.FC = () => {
   return (
-    <section id="venue-section" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#0a0f0c]">
+    <section id="venue-section" className="w-full py-16 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-12 bg-[#0a0f0c] scroll-mt-20 sm:scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 sm:mb-12 text-center md:text-left">
           <span className="text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-[0.16em] uppercase flex items-center justify-center md:justify-start gap-1.5">
