@@ -38,6 +38,8 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPassPulsing, setIsPassPulsing] = useState(false);
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -45,6 +47,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   const [isDragging, setIsDragging] = useState(false);
 
   const flyerCardRef = useRef<HTMLDivElement>(null);
+  const reservationCode = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const triggerPassPulse = () => {
@@ -190,12 +193,37 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   // Submit RSVP - automatically updates the spreadsheet in the backend
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setShowSuccessToast(false);
+    if (!reservationCode.current) {
+      try {
+        const saved = sessionStorage.getItem('rsvp-reservation-id');
+        reservationCode.current = saved && /^CK-2026-XMAS-[0-9a-f-]{36}$/i.test(saved)
+          ? saved : `CK-2026-XMAS-${crypto.randomUUID()}`;
+        sessionStorage.setItem('rsvp-reservation-id', reservationCode.current);
+      } catch {
+        reservationCode.current = `CK-2026-XMAS-${crypto.randomUUID()}`;
+      }
+    }
     const updatedPass: PatronPassData = {
       ...formData,
-      passCode: `CK-2026-XMAS-${randomCode}`,
+      passCode: reservationCode.current,
       confirmedAt: new Date().toLocaleDateString(),
     };
+    try {
+      const result = await submitRsvpToSpreadsheet(updatedPass);
+      if (!result.success) {
+        setSubmitError(result.message);
+        return;
+      }
+    } catch {
+      setSubmitError('Your RSVP could not be saved. Please try again.');
+      return;
+    } finally {
+      setIsSubmitting(false);
+    }
     setFormData(updatedPass);
     triggerPassPulse();
 
@@ -208,11 +236,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
     });
 
     onPassConfirmed?.(updatedPass);
-
-    // Silently update the backend spreadsheet registry
-    submitRsvpToSpreadsheet(updatedPass).catch((err) => {
-      console.warn('Background spreadsheet update:', err);
-    });
 
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 6000);
@@ -717,13 +740,15 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                   />
                 </div>
 
+                {submitError && <p role="alert" className="text-sm text-red-300">{submitError}</p>}
                 {/* Submit button */}
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full py-3.5 px-6 bg-[#e9c349] hover:bg-[#ffe088] text-[#3c2f00] font-bold text-xs sm:text-sm tracking-wider uppercase rounded-lg shadow-[0_0_24px_rgba(233,195,73,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
                 >
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <span>Confirm RSVP & Update Brag Pass</span>
+                  <span>{isSubmitting ? 'Saving RSVP…' : 'Confirm RSVP & Update Brag Pass'}</span>
                 </button>
               </form>
             </div>

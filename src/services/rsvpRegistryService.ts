@@ -35,7 +35,10 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
   message: string;
   count: number;
 }> {
-  // Update local backup first
+  // Keep photos in the flyer only; never send base64 images to the function.
+  const { photoUrl: _photo, confirmedAt: _confirmedAt, ...payload } = patron;
+
+  // Prepare a local backup, persisted only after the server confirms the save.
   const existingLocal = getLocalRsvps();
   const newLocalItem: RsvpRecord = {
     id: `local-${Date.now()}`,
@@ -48,18 +51,11 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
     phone: patron.phone || 'N/A',
     seatingZone: patron.seatingZone,
     prayerIntentions: patron.prayerIntentions || 'None',
-    photoUrl: patron.photoUrl,
     status: 'Confirmed • Active',
   };
 
   const filtered = existingLocal.filter((r) => r.passCode !== patron.passCode);
   const updatedLocal = [newLocalItem, ...filtered];
-  try {
-    localStorage.setItem(LOCAL_STORAGE_BACKUP, JSON.stringify(updatedLocal));
-  } catch (e) {
-    console.warn('Local storage write error:', e);
-  }
-
   // Submit to backend server endpoint /api/rsvp
   try {
     const res = await fetch('/api/rsvp', {
@@ -67,25 +63,32 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(patron),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(25000),
     });
 
     if (res.ok) {
       const data: RsvpResponse = await res.json();
+      if (data.success !== true) throw new Error("RSVP was not saved.");
+      try {
+        localStorage.setItem(LOCAL_STORAGE_BACKUP, JSON.stringify(updatedLocal));
+      } catch { /* A storage failure must not hide a confirmed server save. */ }
       return {
         success: true,
         message: data.message || `Recorded ${patron.fullName} in spreadsheet registry!`,
         count: data.count || updatedLocal.length,
       };
     }
+    const failure = await res.json().catch(() => null);
+    return { success: false, message: failure?.error || 'Your RSVP could not be saved. Please contact the organizers before retrying.', count: existingLocal.length };
   } catch (err) {
-    console.warn('Backend /api/rsvp fetch failed, using local storage backup:', err);
+    console.warn('Backend /api/rsvp fetch failed, save was not confirmed:', err);
   }
 
   return {
-    success: true,
-    message: `Recorded ${patron.fullName} in attendee registry!`,
-    count: updatedLocal.length,
+    success: false,
+    message: 'Your RSVP save could not be confirmed. Please contact the organizers before retrying.',
+    count: existingLocal.length,
   };
 }
 
