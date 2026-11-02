@@ -1,10 +1,6 @@
-import { Church, Sparkles, ArrowUp, Mail, Phone, FileSpreadsheet } from 'lucide-react';
+import { Church, Sparkles, ArrowUp, Mail, Phone } from 'lucide-react';
 
-interface FooterProps {
-  onOpenSyncModal?: () => void;
-}
-
-export const Footer: React.FC<FooterProps> = ({ onOpenSyncModal }) => {
+export const Footer = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -111,17 +107,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSyncModal }) => {
             <span>Called to win by our voices</span>
           </div>
           <div className="flex items-center gap-3">
-            {onOpenSyncModal && (
-              <button
-                type="button"
-                onClick={onOpenSyncModal}
-                className="px-3 py-1.5 rounded-lg bg-[#1c211e] hover:bg-[#262b28] text-[#e9c349] border border-[#e9c349]/30 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-                title="Open Google Sheet Registry & Webhook Diagnostics"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Spreadsheet Sync</span>
-              </button>
-            )}
             <button
               onClick={scrollToTop}
               className="p-2 rounded-lg bg-[#1c211e] hover:bg-[#313632] text-[#e9c349] border border-[#e9c349]/20 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"

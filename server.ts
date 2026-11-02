@@ -119,14 +119,6 @@ function loadConfig(): { googleSheetWebhookUrl?: string } {
   };
 }
 
-function saveConfig(config: { googleSheetWebhookUrl?: string }) {
-  try {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Error writing config.json:', err);
-  }
-}
-
 let rsvps: RsvpEntry[] = loadRsvps();
 let config = loadConfig();
 
@@ -216,56 +208,6 @@ async function forwardToGoogleSheetWebhook(entry: RsvpEntry): Promise<{
 }
 
 // REST API Endpoints
-// 1. GET /api/rsvps - retrieve all registered attendees
-app.get('/api/rsvps', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    count: rsvps.length,
-    totalSeats: rsvps.reduce((acc, curr) => acc + (curr.guestCount || 1), 0),
-    rsvps,
-    hasWebhook: !!(config.googleSheetWebhookUrl || process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL),
-    webhookUrl: config.googleSheetWebhookUrl || DEFAULT_WEBHOOK_URL,
-  });
-});
-
-// 2. POST /api/webhook/test - test Google Apps Script connectivity
-app.post('/api/webhook/test', async (_req: Request, res: Response) => {
-  const testEntry: RsvpEntry = {
-    id: `test-${Date.now()}`,
-    timestamp: new Date().toLocaleString(),
-    fullName: 'Webhook Test Entry',
-    tier: 'VIP Benefactor',
-    guestCount: 1,
-    passCode: 'CK-TEST-DIAG',
-    email: 'test@example.com',
-    phone: '+237 672 668 334',
-    seatingZone: 'Center Nave',
-    prayerIntentions: 'Testing Google Sheet sync connection',
-    status: 'Confirmed',
-  };
-  const result = await forwardToGoogleSheetWebhook(testEntry);
-  res.json({
-    webhookUrl: config.googleSheetWebhookUrl || DEFAULT_WEBHOOK_URL,
-    result,
-  });
-});
-
-// 2b. POST /api/rsvps/sync-all - push all registered patrons to Google Sheet
-app.post('/api/rsvps/sync-all', async (_req: Request, res: Response) => {
-  const syncResults = [];
-  for (const entry of rsvps) {
-    const resSync = await forwardToGoogleSheetWebhook(entry);
-    syncResults.push({ name: entry.fullName, passCode: entry.passCode, success: resSync.success, error: resSync.error });
-  }
-  res.json({
-    success: true,
-    message: `Attempted sync of ${rsvps.length} entries to Google Sheet.`,
-    total: rsvps.length,
-    synced: syncResults.filter((r) => r.success).length,
-    details: syncResults,
-  });
-});
-
 // 3. POST /api/rsvp - submit new patron RSVP & update the sheet
 app.post('/api/rsvp', async (req: Request, res: Response) => {
   const {
@@ -323,77 +265,13 @@ app.post('/api/rsvp', async (req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    message: webhookResult.success
-      ? `Attendee ${newEntry.fullName} recorded & synced to Google Sheet registry!`
-      : `Attendee ${newEntry.fullName} recorded in attendee registry.${webhookResult.authRequired ? " Note: Google Sheet permissions require 'Who has access: Anyone' in Apps Script." : ""}`,
-    entry: newEntry,
-    count: rsvps.length,
-    totalSeats: rsvps.reduce((acc, curr) => acc + (curr.guestCount || 1), 0),
-    webhookResult,
+    message: 'Your RSVP is confirmed.',
   });
 });
 
-// 3. GET /api/rsvps/export.csv - download formatted CSV for Google Sheets / Excel
-app.get('/api/rsvps/export.csv', (_req: Request, res: Response) => {
-  const headers = [
-    'Timestamp',
-    'Full Name',
-    'Patron Tier',
-    'Seats Reserved',
-    'Pass Code',
-    'Email Address',
-    'WhatsApp / Phone',
-    'Seating Zone',
-    'Special Petitions & Requests',
-    'Admission Status'
-  ];
-
-  const escapeCsv = (val: string | number) => {
-    const s = String(val ?? '').replace(/"/g, '""');
-    return `"${s}"`;
-  };
-
-  const rows = rsvps.map((r) => [
-    escapeCsv(r.timestamp),
-    escapeCsv(r.fullName),
-    escapeCsv(r.tier),
-    r.guestCount || 1,
-    escapeCsv(r.passCode),
-    escapeCsv(r.email),
-    escapeCsv(r.phone),
-    escapeCsv(r.seatingZone),
-    escapeCsv(r.prayerIntentions),
-    escapeCsv(r.status),
-  ]);
-
-  const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\r\n');
-
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader(
-    'Content-Disposition',
-    'attachment; filename="St_Cletus_Choir_Christmas_2026_RSVP_Registry.csv"'
-  );
-  res.send(csvContent);
-});
-
-// 4. GET /api/settings - get configuration
-app.get('/api/settings', (_req: Request, res: Response) => {
-  res.json({
-    googleSheetWebhookUrl: config.googleSheetWebhookUrl || '',
-    isConfigured: !!config.googleSheetWebhookUrl,
-  });
-});
-
-// 5. POST /api/settings - update Google Sheet Webhook URL
-app.post('/api/settings', (req: Request, res: Response) => {
-  const { googleSheetWebhookUrl } = req.body;
-  config.googleSheetWebhookUrl = String(googleSheetWebhookUrl || '').trim();
-  saveConfig(config);
-  res.json({
-    success: true,
-    message: 'Google Sheet webhook updated successfully.',
-    isConfigured: !!config.googleSheetWebhookUrl,
-  });
+// The visitor site does not expose registry reads, exports, or admin settings.
+app.use('/api', (_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Not found.' });
 });
 
 async function start() {

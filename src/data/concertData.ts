@@ -146,36 +146,21 @@ export const REPERTOIRE_LIST: RepertoireItem[] = [
 ];
 
 export const INITIAL_PATRON: PatronPassData = {
-  fullName: 'Dr. Eleanor Vance',
-  email: 'e.vance@cameroon-health.org',
-  phone: '+237 675 360 863',
-  tier: 'VIP Benefactor (Reserved)',
-  guestCount: 2,
-  seatingZone: 'Reserved Center Nave • Pew A-14',
-  passCode: 'CK-2026-XMAS-7821',
+  fullName: '',
+  email: '',
+  phone: '',
+  tier: 'General Admission (Free)',
+  guestCount: 1,
+  seatingZone: 'Main Sanctuary Nave • Open Seating',
+  passCode: 'RSVP-PREVIEW',
   photoUrl: '/assets/avatars/avatar_eleanor.jpg',
-  prayerIntentions: 'For peace and blessings over Bamenda and families in Christ the King Parish.'
+  prayerIntentions: '',
 };
 
 export const SAMPLE_AVATARS = [
-  {
-    name: 'Dr. Eleanor Vance',
-    url: '/assets/avatars/avatar_eleanor.jpg'
-  },
-  {
-    name: 'Pa Julius Fomuso',
-    url: '/assets/avatars/avatar_julius.jpg'
-  },
-  {
-    name: 'Sr. Beatrice Lum',
-    url: '/assets/avatars/avatar_beatrice.jpg'
-  },
-  {
-    name: 'Che Emmanuel',
-    url: '/assets/avatars/avatar_emmanuel.jpg'
-  },
-  {
-    name: 'Mbah Collette',
-    url: '/assets/avatars/avatar_collette.jpg'
-  }
+  { name: 'Portrait 1', url: '/assets/avatars/avatar_eleanor.jpg' },
+  { name: 'Portrait 2', url: '/assets/avatars/avatar_julius.jpg' },
+  { name: 'Portrait 3', url: '/assets/avatars/avatar_beatrice.jpg' },
+  { name: 'Portrait 4', url: '/assets/avatars/avatar_emmanuel.jpg' },
+  { name: 'Portrait 5', url: '/assets/avatars/avatar_collette.jpg' },
 ];

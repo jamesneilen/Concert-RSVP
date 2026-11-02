@@ -50,7 +50,7 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     if (!response.ok || !(result.result === 'success' || result.success === true)) {
       return send(502, { error: 'The RSVP registry could not confirm your reservation. Please try again or contact the choir.' });
     }
-    return send(200, { success: true, message: 'Your RSVP is confirmed.', count: result.count ?? 0 });
+    return send(200, { success: true, message: 'Your RSVP is confirmed.' });
   } catch {
     return send(502, { error: 'The RSVP registry is temporarily unavailable. Please try again or contact the choir.' });
   }

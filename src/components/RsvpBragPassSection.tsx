@@ -27,13 +27,11 @@ import { SocialShareModal } from './SocialShareModal';
 interface RsvpBragPassSectionProps {
   onPassConfirmed?: (pass: PatronPassData) => void;
   onPassChange?: (pass: PatronPassData) => void;
-  onOpenSyncModal?: () => void;
 }
 
 export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   onPassConfirmed,
   onPassChange,
-  onOpenSyncModal,
 }) => {
   const [formData, setFormData] = useState<PatronPassData>(INITIAL_PATRON);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,13 +166,12 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   };
 
   // Select sample avatar
-  const handleSelectPresetAvatar = (avatarUrl: string, name: string) => {
+  const handleSelectPresetAvatar = (avatarUrl: string) => {
     setUploadedFileName(null);
     setPhotoError(null);
     const updatedPass = {
       ...formData,
       photoUrl: avatarUrl,
-      fullName: name,
     };
     setFormData(updatedPass);
     onPassChange?.(updatedPass);
@@ -546,9 +543,9 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                         <button
                           key={av.name}
                           type="button"
-                          onClick={() => handleSelectPresetAvatar(av.url, av.name)}
+                          onClick={() => handleSelectPresetAvatar(av.url)}
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] transition-all border cursor-pointer ${
-                            formData.fullName === av.name
+                            formData.photoUrl === av.url
                               ? 'bg-[#e9c349]/20 border-[#e9c349] text-[#e9c349] font-bold shadow-[0_0_10px_rgba(233,195,73,0.25)]'
                               : 'bg-[#0a0f0c] border-[#313632] text-[#dfe4de] hover:border-[#e9c349]/40'
                           }`}
@@ -559,7 +556,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                             className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-[#e9c349]/40 flex-shrink-0"
                             referrerPolicy="no-referrer"
                           />
-                          <span>{av.name.split(' ')[0]}</span>
+                          <span>{av.name}</span>
                         </button>
                       ))}
                     </div>
@@ -587,7 +584,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                         onPassChange?.(updated);
                         triggerPassPulse();
                       }}
-                      placeholder="e.g. Dr. Eleanor Vance"
+                      placeholder="Your full name"
                       className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2.5 rounded-lg text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-[#e9c349] placeholder:text-[#e2bebc]/40 border border-[#e9c349]/30 min-h-[44px]"
                     />
                   </div>
@@ -667,7 +664,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                      placeholder="e.vance@cameroon-health.org"
+                      placeholder="Your email address"
                       className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2 rounded-lg text-base sm:text-xs focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#313632] min-h-[44px]"
                     />
                   </div>
@@ -734,15 +731,6 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                   <Lock className="w-3.5 h-3.5 text-[#e9c349]" />
                   <span>Parish RSVP Registry</span>
                 </span>
-                {onOpenSyncModal && (
-                  <button
-                    type="button"
-                    onClick={onOpenSyncModal}
-                    className="text-[#e9c349] hover:underline font-semibold ml-2 text-[10px] sm:text-[11px] flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>(Google Sheet Diagnostics)</span>
-                  </button>
-                )}
               </div>
               <span className="text-[#e9c349] font-semibold">100% Free Admission</span>
             </div>
