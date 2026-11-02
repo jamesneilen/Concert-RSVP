@@ -772,33 +772,157 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
               </span>
             </div>
 
-            <div ref={flyerCardRef} id="brag-pass-card" className={`concert-flyer ${isPassPulsing ? 'flyer-pulse' : ''}`}>
-              <div className="flyer-border" aria-hidden="true" />
-              <div className="flyer-heading">
-                <Church size={24} />
-                <span>Christ the King Parish · Nacho, Bamenda</span>
-                <strong>ST CLETUS CHOIR</strong>
-                <span className="flyer-eyebrow">presents a Christmas concert</span>
+            {/* THE SACRED BRAG PASS GRAPHIC CARD (Render Target) */}
+            <div
+              ref={flyerCardRef}
+              id="brag-pass-card"
+              className={`relative w-full rounded-xl overflow-hidden bg-gradient-to-b from-[#8b0014] via-[#0a0f0c] to-[#0a0f0c] shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-[#dfe4de] p-3.5 sm:p-6 lg:p-7 flex flex-col justify-between my-auto border-2 border-[#e9c349]/40 transition-all duration-300 ${
+                isPassPulsing ? 'scale-[1.01] border-[#e9c349] shadow-[0_0_30px_rgba(233,195,73,0.4)]' : ''
+              }`}
+            >
+              {/* Ornate Outer Gold Halo */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c349]/15 via-transparent to-transparent pointer-events-none" />
+
+              {/* Top Header & Parish Seal Bar */}
+              <div className="relative z-10 flex items-start justify-between flex-wrap border-b border-[#e9c349]/30 pb-2.5 sm:pb-3 gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-[#0a0f0c]/90 flex items-center justify-center shadow-lg text-[#e9c349] border border-[#e9c349]/40 flex-shrink-0">
+                    <Church className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] tracking-widest uppercase block leading-none mb-1 truncate">
+                      Official RSVP Concert Flyer • 2026
+                    </span>
+                    <h4 className="font-serif text-base sm:text-lg font-bold text-[#dfe4de] tracking-wide leading-tight truncate">
+                      St Cletus Choir
+                    </h4>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span
+                    id="flyer-tier-badge"
+                    className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${getTierColorStyle()}`}
+                  >
+                    {formData.tier}
+                  </span>
+                </div>
               </div>
-              <div className="flyer-title">
-                <span className="flyer-star" aria-hidden="true">✦</span>
-                <h3>Sing Unto God</h3>
-                <p>for Christ is Born</p>
-                <div className="flyer-rule" />
-                <span>A celebration of faith, music & togetherness</span>
+
+              {/* Concert Theme Banner on Flyer */}
+              <div className="relative z-10 text-center mt-2.5 sm:mt-3 mb-2 px-2.5 py-1 sm:py-1.5 rounded bg-[#0a0f0c]/80 border border-[#e9c349]/20 shadow-inner">
+                <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349]/80 tracking-widest uppercase block">
+                  Concert Theme
+                </span>
+                <span className="font-serif text-base sm:text-lg lg:text-xl text-[#e9c349] font-bold italic tracking-wide block leading-snug">
+                  “Sing Unto God for Christ is Born”
+                </span>
               </div>
-              <div className="flyer-portrait">
-                <img src={formData.photoUrl} alt="Your concert flyer portrait" />
+
+              {/* Center Dynamic Patron Spotlight with Photo Frame */}
+              <div className="relative z-10 my-2 sm:my-3 py-3 sm:py-4 bg-[#0a0f0c]/70 rounded-lg px-2.5 sm:px-4 backdrop-blur-sm text-center border border-[#e9c349]/20">
+                {/* Attendee Photo Display Frame */}
+                <div className="relative mx-auto mb-2 sm:mb-3 w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-[#e9c349] via-[#ffe088] to-[#e9c349] shadow-[0_0_24px_rgba(233,195,73,0.45)]">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#313632] relative">
+                    <img
+                      key={formData.photoUrl}
+                      src={formData.photoUrl}
+                      alt="Patron attendee portrait on brag pass"
+                      crossOrigin="anonymous"
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        isProcessingPhoto ? 'opacity-40 scale-105' : 'opacity-100 scale-100'
+                      }`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = INITIAL_PATRON.photoUrl;
+                      }}
+                    />
+                    {isProcessingPhoto && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[#e9c349]">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#8b0014] border-2 border-[#e9c349] flex items-center justify-center text-[#e9c349] shadow-md">
+                    <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </div>
+                </div>
+
+                <div className="mb-3 sm:mb-4">
+                  <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e9c349]/40 bg-[#1f4a3c]/70 px-5 py-1.5 font-serif text-lg sm:text-xl font-bold text-[#e9c349]">
+                    <CheckCircle2 className="w-4 h-4" />
+                    I will be there
+                  </span>
+                </div>
+
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#e9c349] uppercase tracking-[0.2em] sm:tracking-[0.25em] block mb-0.5">
+                  Honored Patron Attendee
+                </span>
+                <div className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-[#e9c349] drop-shadow-md my-1 break-words px-1">
+                  {formData.fullName || 'Honored Parish Guest'}
+                </div>
+                <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5">
+                  {getTierSeating()}
+                </p>
+
+                {/* Venue Notice in Card */}
+                <div className="inline-flex items-center gap-1.5 text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mt-1.5 sm:mt-2 px-2.5 sm:px-3 py-0.5 rounded-full bg-[#1f4a3c]/70 border border-[#e9c349]/20 max-w-full">
+                  <Church className="w-3 h-3 flex-shrink-0" />
+                  <span className="leading-relaxed">Christ the King Parish, Nacho, Bamenda</span>
+                </div>
+
+                {/* Garland / Ribbon Motif divider */}
+                <div className="flex items-center justify-center gap-2 my-2 sm:my-2.5 text-[#e9c349]">
+                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
+                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest">
+                    Christmas Concert
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
+                </div>
+
+                {/* Date, Time, Venue Details in Pass */}
+                <div className="grid grid-cols-2 gap-2 text-left bg-[#1c211e]/80 p-2 sm:p-2.5 rounded border border-[#e9c349]/15">
+                  <div>
+                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
+                      <Calendar className="w-2.5 h-2.5" />
+                      Event Date
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
+                      Sun, Dec 27, 2026
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" />
+                      Curtain Call
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
+                      1:00 PM WAT
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flyer-attendance">I will be there</div>
-              <div className="flyer-name">{formData.fullName || 'Your name here'}</div>
-              <div className="flyer-tier">{formData.tier}</div>
-              <div className="flyer-date">
-                <div><span>SUNDAY</span><strong>27</strong><span>DECEMBER 2026</span></div>
-                <div><span>CONCERT BEGINS</span><strong>1:00<span> PM</span></strong><span>WEST AFRICA TIME</span></div>
+
+              {/* Bottom Pass Stub with QR Code & Barcode */}
+              <div className="relative z-10 pt-2 flex items-center justify-between border-t border-[#e9c349]/25 text-[9px] sm:text-[10px] text-[#e2bebc]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <QrCode className="w-6 h-6 sm:w-7 sm:h-7 text-[#e9c349] flex-shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-[#e9c349] font-mono font-bold block truncate">
+                      {formData.passCode}
+                    </span>
+                    <span className="truncate block">
+                      {formData.guestCount} {formData.guestCount === 1 ? 'Guest' : 'Guests'} Reserved
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0 pl-1">
+                  <span className="text-[8px] sm:text-[9px] font-mono tracking-widest text-[#e9c349]/80 block">
+                    ||| | |||| | |||
+                  </span>
+                  <span className="text-[8px] sm:text-[9px] text-[#a3d0be]">SANCTUARY ACCESS</span>
+                </div>
               </div>
-              <div className="flyer-venue"><Church size={16} /><strong>Christ the King Parish</strong><span>Nacho, Bamenda · Free admission</span></div>
-              <div className="flyer-footer"><span>{formData.confirmedAt ? formData.passCode : 'PERSONALIZED RSVP FLYER'}</span><span>{formData.guestCount} {formData.guestCount === 1 ? 'guest' : 'guests'} · {formData.confirmedAt ? 'RSVP confirmed' : 'RSVP preview'}</span></div>
             </div>
 
             {/* Flyer Actions & Social Media Share Suite */}
