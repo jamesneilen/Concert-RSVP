@@ -63,7 +63,7 @@ export const LogisticsAndVenue: React.FC = () => {
 
         {/* Sanctuary Location Bar */}
         <div className="bg-[#262b28] p-4 sm:p-6 lg:p-7 rounded-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-[#e9c349]/25">
-          <div className="flex items-center gap-3 sm:gap-4 text-left min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 text-left min-w-0 max-w-full">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#af8d11] flex items-center justify-center text-[#342800] shadow-md flex-shrink-0">
               <Church className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>

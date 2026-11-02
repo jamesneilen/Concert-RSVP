@@ -55,7 +55,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   // Caption text attached to the flyer image
   const flyerCaptionText = `✨ "For Unto Us a Child Is Born, Unto Us a Son Is Given!"
 
-Here is my official personalized pass for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!
+I will be there! Here is my official personalized pass for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!
 📅 Sunday, Dec 27, 2026 • 1:00 PM WAT
 📍 Christ the King Parish, Nacho, Bamenda
 🎟️ Pass Code: #${patron.passCode}
@@ -83,6 +83,7 @@ ${shareUrl}`;
 
     const dataUrl = await toPng(cardElement, {
       cacheBust: true,
+        skipFonts: true,
       quality: 0.98,
       pixelRatio: 2,
     });

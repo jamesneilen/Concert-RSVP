@@ -36,6 +36,8 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   onOpenSyncModal,
 }) => {
   const [formData, setFormData] = useState<PatronPassData>(INITIAL_PATRON);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -117,7 +119,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
             };
 
             setFormData(updatedPass);
-            onPassConfirmed?.(updatedPass);
             onPassChange?.(updatedPass);
             triggerPassPulse();
             setPhotoError(null);
@@ -128,7 +129,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
               photoUrl: rawDataUrl,
             };
             setFormData(updatedPass);
-            onPassConfirmed?.(updatedPass);
             onPassChange?.(updatedPass);
             triggerPassPulse();
           }
@@ -139,7 +139,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
             photoUrl: rawDataUrl,
           };
           setFormData(updatedPass);
-          onPassConfirmed?.(updatedPass);
           onPassChange?.(updatedPass);
           triggerPassPulse();
         } finally {
@@ -148,16 +147,10 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       };
 
       img.onerror = () => {
-        // Fallback directly to raw data URL
-        const updatedPass: PatronPassData = {
-          ...formData,
-          photoUrl: rawDataUrl,
-        };
-        setFormData(updatedPass);
-        onPassConfirmed?.(updatedPass);
-        onPassChange?.(updatedPass);
-        triggerPassPulse();
+        setPhotoError("This image could not be decoded. Please choose a JPG, PNG, or WebP photo.");
         setIsProcessingPhoto(false);
+        return;
+
       };
 
       img.src = rawDataUrl;
@@ -184,7 +177,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       fullName: name,
     };
     setFormData(updatedPass);
-    onPassConfirmed?.(updatedPass);
     onPassChange?.(updatedPass);
     triggerPassPulse();
   };
@@ -192,14 +184,31 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   // Submit RSVP - automatically updates the spreadsheet in the backend
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    if (isSubmitting) return;
+    if (!formData.fullName.trim()) {
+      setActionError('Please enter your name.');
+      return;
+    }
+    setIsSubmitting(true);
+    setActionError(null);
     const updatedPass: PatronPassData = {
       ...formData,
-      passCode: `CK-2026-XMAS-${randomCode}`,
-      confirmedAt: new Date().toLocaleDateString(),
+      fullName: formData.fullName.trim(),
+      passCode: formData.confirmedAt ? formData.passCode : `CK-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      confirmedAt: new Date().toISOString(),
     };
+    try {
+      await submitRsvpToSpreadsheet(updatedPass);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Could not save your RSVP. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
+    setIsSubmitting(false);
     setFormData(updatedPass);
     triggerPassPulse();
+
+    onPassConfirmed?.(updatedPass);
 
     // Sacred gold & crimson celebratory confetti
     confetti({
@@ -209,12 +218,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       colors: ['#e9c349', '#8b0014', '#ffe088', '#a3d0be'],
     });
 
-    onPassConfirmed?.(updatedPass);
-
-    // Silently update the backend spreadsheet registry
-    submitRsvpToSpreadsheet(updatedPass).catch((err) => {
-      console.warn('Background spreadsheet update:', err);
-    });
+    onPassChange?.(updatedPass);
 
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 6000);
@@ -226,6 +230,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
     try {
       const dataUrl = await toPng(flyerCardRef.current, {
         cacheBust: true,
+        skipFonts: true,
         quality: 0.98,
         pixelRatio: 2,
       });
@@ -243,7 +248,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
 
   const flyerCaptionText = `✨ "For Unto Us a Child Is Born, Unto Us a Son Is Given!"
 
-Here is my official personalized pass for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!
+I will be there! Here is my official personalized pass for "Sing Unto God for Christ is Born" Christmas Concert with St Cletus Choir!
 📅 Sunday, Dec 27, 2026 • 1:00 PM WAT
 📍 Christ the King Parish, Nacho, Bamenda
 🎟️ Pass Code: #${formData.passCode}
@@ -260,6 +265,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
     try {
       const dataUrl = await toPng(flyerCardRef.current, {
         cacheBust: true,
+        skipFonts: true,
         quality: 0.98,
         pixelRatio: 2,
       });
@@ -270,7 +276,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Image export failed:', err);
+      setActionError('Could not export your flyer. Please try again once the photo has loaded.');
     } finally {
       setIsDownloading(false);
     }
@@ -315,14 +321,14 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
   };
 
   // Copy personal brag link
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}${window.location.pathname}?patron=${encodeURIComponent(
-        formData.fullName
-      )}&pass=${formData.passCode}#rsvp-portal`
-    );
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 3000);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#rsvp-portal`);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    } catch {
+      setActionError('Could not copy the link. You can copy the website address from your browser.');
+    }
   };
 
   const getTierColorStyle = () => {
@@ -528,7 +534,6 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                               setUploadedFileName(null);
                               const updated = { ...formData, photoUrl: INITIAL_PATRON.photoUrl };
                               setFormData(updated);
-                              onPassConfirmed?.(updated);
                               onPassChange?.(updated);
                               triggerPassPulse();
                             }}
@@ -584,6 +589,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                       id="rsvp-name"
                       type="text"
                       required
+                      maxLength={120}
                       value={formData.fullName}
                       onChange={(e) => {
                         const updated = { ...formData, fullName: e.target.value };
@@ -722,11 +728,13 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                 {/* Submit button */}
                 <button
                   type="submit"
+                  disabled={isSubmitting || isProcessingPhoto}
                   className="w-full py-3.5 px-6 bg-[#e9c349] hover:bg-[#ffe088] text-[#3c2f00] font-bold text-xs sm:text-sm tracking-wider uppercase rounded-lg shadow-[0_0_24px_rgba(233,195,73,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
                 >
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <span>Confirm RSVP & Update Brag Pass</span>
+                  <span>{isSubmitting ? 'Saving your RSVP…' : 'I will be there — Confirm RSVP'}</span>
                 </button>
+                {actionError && <p role="alert" className="text-sm text-[#ffb3ae]">{actionError}</p>}
               </form>
             </div>
 
@@ -734,7 +742,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-[#e9c349]" />
-                  <span>Encrypted Parish Registry</span>
+                  <span>Parish RSVP Registry</span>
                 </span>
                 {onOpenSyncModal && (
                   <button
@@ -750,13 +758,13 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
             </div>
           </div>
 
-          {/* Right: Live Dynamic Flyer Render */}
+          {/* Right: Your personalized concert flyer */}
           <div className="lg:col-span-6 flex flex-col justify-between bg-[#262b28] rounded-xl p-3.5 sm:p-6 lg:p-7 shadow-2xl border border-[#e9c349]/25">
             <div className="flex items-center justify-between mb-2.5 sm:mb-3">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e9c349] animate-ping" />
                 <span className="text-[10px] sm:text-[11px] font-bold text-[#e9c349] uppercase tracking-widest">
-                  Live Dynamic Flyer Render
+                  Your personalized concert flyer
                 </span>
               </div>
               <span className="text-[9px] sm:text-[10px] font-mono text-[#a3d0be]">
@@ -764,150 +772,33 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
               </span>
             </div>
 
-            {/* THE SACRED BRAG PASS GRAPHIC CARD (Render Target) */}
-            <div
-              ref={flyerCardRef}
-              id="brag-pass-card"
-              className={`relative w-full rounded-xl overflow-hidden bg-gradient-to-b from-[#8b0014] via-[#0a0f0c] to-[#0a0f0c] shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-[#dfe4de] p-3.5 sm:p-6 lg:p-7 flex flex-col justify-between my-auto border-2 border-[#e9c349]/40 transition-all duration-300 ${
-                isPassPulsing ? 'scale-[1.01] border-[#e9c349] shadow-[0_0_30px_rgba(233,195,73,0.4)]' : ''
-              }`}
-            >
-              {/* Ornate Outer Gold Halo */}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c349]/15 via-transparent to-transparent pointer-events-none" />
-
-              {/* Top Header & Parish Seal Bar */}
-              <div className="relative z-10 flex items-start justify-between border-b border-[#e9c349]/30 pb-2.5 sm:pb-3 gap-2">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-[#0a0f0c]/90 flex items-center justify-center shadow-lg text-[#e9c349] border border-[#e9c349]/40 flex-shrink-0">
-                    <Church className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] tracking-widest uppercase block leading-none mb-1 truncate">
-                      Official RSVP Concert Flyer • 2026
-                    </span>
-                    <h4 className="font-serif text-base sm:text-lg font-bold text-[#dfe4de] tracking-wide leading-tight truncate">
-                      St Cletus Choir
-                    </h4>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <span
-                    id="flyer-tier-badge"
-                    className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${getTierColorStyle()}`}
-                  >
-                    {formData.tier}
-                  </span>
-                </div>
+            <div ref={flyerCardRef} id="brag-pass-card" className={`concert-flyer ${isPassPulsing ? 'flyer-pulse' : ''}`}>
+              <div className="flyer-border" aria-hidden="true" />
+              <div className="flyer-heading">
+                <Church size={24} />
+                <span>Christ the King Parish · Nacho, Bamenda</span>
+                <strong>ST CLETUS CHOIR</strong>
+                <span className="flyer-eyebrow">presents a Christmas concert</span>
               </div>
-
-              {/* Concert Theme Banner on Flyer */}
-              <div className="relative z-10 text-center mt-2.5 sm:mt-3 mb-2 px-2.5 py-1 sm:py-1.5 rounded bg-[#0a0f0c]/80 border border-[#e9c349]/20 shadow-inner">
-                <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349]/80 tracking-widest uppercase block">
-                  Concert Theme
-                </span>
-                <span className="font-serif text-sm sm:text-lg lg:text-xl text-[#e9c349] font-bold italic tracking-wide block truncate">
-                  “Sing Unto God for Christ is Born”
-                </span>
+              <div className="flyer-title">
+                <span className="flyer-star" aria-hidden="true">✦</span>
+                <h3>Sing Unto God</h3>
+                <p>for Christ is Born</p>
+                <div className="flyer-rule" />
+                <span>A celebration of faith, music & togetherness</span>
               </div>
-
-              {/* Center Dynamic Patron Spotlight with Photo Frame */}
-              <div className="relative z-10 my-2 sm:my-3 py-3 sm:py-4 bg-[#0a0f0c]/70 rounded-lg px-2.5 sm:px-4 backdrop-blur-sm text-center border border-[#e9c349]/20">
-                {/* Attendee Photo Display Frame */}
-                <div className="relative mx-auto mb-2 sm:mb-3 w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-[#e9c349] via-[#ffe088] to-[#e9c349] shadow-[0_0_24px_rgba(233,195,73,0.45)]">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-[#313632] relative">
-                    <img
-                      key={formData.photoUrl}
-                      src={formData.photoUrl}
-                      alt="Patron attendee portrait on brag pass"
-                      crossOrigin="anonymous"
-                      className={`w-full h-full object-cover transition-all duration-300 ${
-                        isProcessingPhoto ? 'opacity-40 scale-105' : 'opacity-100 scale-100'
-                      }`}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = INITIAL_PATRON.photoUrl;
-                      }}
-                    />
-                    {isProcessingPhoto && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[#e9c349]">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#8b0014] border-2 border-[#e9c349] flex items-center justify-center text-[#e9c349] shadow-md">
-                    <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </div>
-                </div>
-
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#e9c349] uppercase tracking-[0.2em] sm:tracking-[0.25em] block mb-0.5">
-                  Honored Patron Attendee
-                </span>
-                <div className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-[#e9c349] drop-shadow-md my-0.5 truncate px-1">
-                  {formData.fullName || 'Honored Parish Guest'}
-                </div>
-                <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5">
-                  {getTierSeating()}
-                </p>
-
-                {/* Venue Notice in Card */}
-                <div className="inline-flex items-center gap-1.5 text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mt-1.5 sm:mt-2 px-2.5 sm:px-3 py-0.5 rounded-full bg-[#1f4a3c]/70 border border-[#e9c349]/20 max-w-full">
-                  <Church className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">Christ the King Parish, Nacho, Bamenda</span>
-                </div>
-
-                {/* Garland / Ribbon Motif divider */}
-                <div className="flex items-center justify-center gap-2 my-2 sm:my-2.5 text-[#e9c349]">
-                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
-                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest">
-                    Christmas Concert
-                  </span>
-                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
-                </div>
-
-                {/* Date, Time, Venue Details in Pass */}
-                <div className="grid grid-cols-2 gap-2 text-left bg-[#1c211e]/80 p-2 sm:p-2.5 rounded border border-[#e9c349]/15">
-                  <div>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
-                      <Calendar className="w-2.5 h-2.5" />
-                      Event Date
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
-                      Sun, Dec 27, 2026
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      Curtain Call
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
-                      1:00 PM WAT
-                    </span>
-                  </div>
-                </div>
+              <div className="flyer-portrait">
+                <img src={formData.photoUrl} alt="Your concert flyer portrait" />
               </div>
-
-              {/* Bottom Pass Stub with QR Code & Barcode */}
-              <div className="relative z-10 pt-2 flex items-center justify-between border-t border-[#e9c349]/25 text-[9px] sm:text-[10px] text-[#e2bebc]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <QrCode className="w-6 h-6 sm:w-7 sm:h-7 text-[#e9c349] flex-shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[#e9c349] font-mono font-bold block truncate">
-                      {formData.passCode}
-                    </span>
-                    <span className="truncate block">
-                      {formData.guestCount} {formData.guestCount === 1 ? 'Guest' : 'Guests'} Reserved
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0 pl-1">
-                  <span className="text-[8px] sm:text-[9px] font-mono tracking-widest text-[#e9c349]/80 block">
-                    ||| | |||| | |||
-                  </span>
-                  <span className="text-[8px] sm:text-[9px] text-[#a3d0be]">SANCTUARY ACCESS</span>
-                </div>
+              <div className="flyer-attendance">I will be there</div>
+              <div className="flyer-name">{formData.fullName || 'Your name here'}</div>
+              <div className="flyer-tier">{formData.tier}</div>
+              <div className="flyer-date">
+                <div><span>SUNDAY</span><strong>27</strong><span>DECEMBER 2026</span></div>
+                <div><span>CONCERT BEGINS</span><strong>1:00<span> PM</span></strong><span>WEST AFRICA TIME</span></div>
               </div>
+              <div className="flyer-venue"><Church size={16} /><strong>Christ the King Parish</strong><span>Nacho, Bamenda · Free admission</span></div>
+              <div className="flyer-footer"><span>{formData.confirmedAt ? formData.passCode : 'PERSONALIZED RSVP FLYER'}</span><span>{formData.guestCount} {formData.guestCount === 1 ? 'guest' : 'guests'} · {formData.confirmedAt ? 'RSVP confirmed' : 'RSVP preview'}</span></div>
             </div>
 
             {/* Flyer Actions & Social Media Share Suite */}
@@ -917,7 +808,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                 <button
                   type="button"
                   onClick={handleDownloadFlyer}
-                  disabled={isDownloading}
+                  disabled={isDownloading || isProcessingPhoto}
                   className="py-3 sm:py-2.5 px-4 bg-[#e9c349] text-[#3c2f00] rounded-lg text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 hover:bg-[#ffe088] transition-all shadow-md cursor-pointer disabled:opacity-50 min-h-[44px]"
                 >
                   <Download className="w-4 h-4" />
@@ -926,7 +817,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                 <button
                   type="button"
                   onClick={() => handleDirectShareFlyer()}
-                  disabled={isDownloading}
+                  disabled={isDownloading || isProcessingPhoto}
                   className="py-3 sm:py-2.5 px-4 bg-gradient-to-r from-[#8b0014] to-[#a00018] hover:from-[#a00018] hover:to-[#b4262c] text-[#dfe4de] rounded-lg text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-all border border-[#e9c349]/50 shadow-[0_0_15px_rgba(139,0,20,0.35)] cursor-pointer min-h-[44px]"
                 >
                   <Share2 className="w-4 h-4 text-[#e9c349]" />
@@ -954,7 +845,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                   <button
                     type="button"
                     onClick={() => handleDirectShareFlyer('whatsapp')}
-                    disabled={isDownloading}
+                    disabled={isDownloading || isProcessingPhoto}
                     className="py-2.5 px-2 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
                     title="Share actual flyer to WhatsApp"
                   >
@@ -968,7 +859,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                   <button
                     type="button"
                     onClick={() => handleDirectShareFlyer('facebook')}
-                    disabled={isDownloading}
+                    disabled={isDownloading || isProcessingPhoto}
                     className="py-2.5 px-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
                     title="Share to Facebook"
                   >
@@ -982,7 +873,7 @@ Here is my official personalized pass for "Sing Unto God for Christ is Born" Chr
                   <button
                     type="button"
                     onClick={() => handleDirectShareFlyer('twitter')}
-                    disabled={isDownloading}
+                    disabled={isDownloading || isProcessingPhoto}
                     className="py-2.5 px-2 bg-black hover:bg-neutral-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 border border-neutral-700 cursor-pointer min-h-[38px] disabled:opacity-50"
                     title="Share to Twitter / X"
                   >

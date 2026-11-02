@@ -37,83 +37,16 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
   message: string;
   count: number;
 }> {
-  // Update local backup first
-  const existingLocal = getLocalRsvps();
-  const newLocalItem: RsvpRecord = {
-    id: `local-${Date.now()}`,
-    timestamp: new Date().toLocaleString(),
-    fullName: patron.fullName,
-    tier: patron.tier,
-    guestCount: patron.guestCount,
-    passCode: patron.passCode,
-    email: patron.email || 'N/A',
-    phone: patron.phone || 'N/A',
-    seatingZone: patron.seatingZone,
-    prayerIntentions: patron.prayerIntentions || 'None',
-    photoUrl: patron.photoUrl,
-    status: 'Confirmed • Active',
-  };
-
-  const filtered = existingLocal.filter((r) => r.passCode !== patron.passCode);
-  const updatedLocal = [newLocalItem, ...filtered];
-  try {
-    localStorage.setItem(LOCAL_STORAGE_BACKUP, JSON.stringify(updatedLocal));
-  } catch (e) {
-    console.warn('Local storage write error:', e);
+  const res = await fetch('/api/rsvp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patron),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'Could not save your RSVP. Please try again.');
   }
-
-  // Also dispatch direct client-side webhook request
-  try {
-    fetch(GOOGLE_SHEET_WEBHOOK_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        timestamp: newLocalItem.timestamp,
-        fullName: patron.fullName,
-        name: patron.fullName,
-        tier: patron.tier,
-        guestCount: patron.guestCount,
-        guests: patron.guestCount,
-        passCode: patron.passCode,
-        code: patron.passCode,
-        email: patron.email || 'N/A',
-        phone: patron.phone || 'N/A',
-        seatingZone: patron.seatingZone,
-        prayerIntentions: patron.prayerIntentions || 'None',
-        specialRequests: patron.prayerIntentions || 'None',
-        status: 'Confirmed • Active',
-      }),
-    }).catch(() => {});
-  } catch (_) {}
-
-  // Submit to backend server endpoint /api/rsvp
-  try {
-    const res = await fetch('/api/rsvp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(patron),
-    });
-
-    if (res.ok) {
-      const data: RsvpResponse = await res.json();
-      return {
-        success: true,
-        message: data.message || `Recorded ${patron.fullName} in spreadsheet registry!`,
-        count: data.count || updatedLocal.length,
-      };
-    }
-  } catch (err) {
-    console.warn('Backend /api/rsvp fetch failed, using local storage backup:', err);
-  }
-
-  return {
-    success: true,
-    message: `Recorded ${patron.fullName} in attendee registry!`,
-    count: updatedLocal.length,
-  };
+  return { success: true, message: data.message, count: data.count };
 }
 
 /**

@@ -99,6 +99,7 @@ function saveRsvps(entries: RsvpEntry[]) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(entries, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error writing rsvps.json:', err);
+    throw err;
   }
 }
 
@@ -166,6 +167,7 @@ async function forwardToGoogleSheetWebhook(entry: RsvpEntry): Promise<{
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload),
       redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
     });
 
     const isRedirectToLogin = res.url && res.url.includes('accounts.google.com');
@@ -278,8 +280,13 @@ app.post('/api/rsvp', async (req: Request, res: Response) => {
     photoUrl,
   } = req.body;
 
-  if (!fullName) {
+  if (typeof fullName !== 'string' || !fullName.trim() || fullName.trim().length > 120) {
     res.status(400).json({ error: 'Attendee full name is required.' });
+    return;
+  }
+
+  if (!Number.isInteger(Number(guestCount)) || Number(guestCount) < 1 || Number(guestCount) > 10) {
+    res.status(400).json({ error: 'Please choose between 1 and 10 guests.' });
     return;
   }
 
@@ -298,15 +305,18 @@ app.post('/api/rsvp', async (req: Request, res: Response) => {
     status: 'Confirmed • Active',
   };
 
-  // Check if updating existing by passCode or adding new
+  // Persist before confirming; keep memory unchanged if disk writes fail.
   const existingIdx = rsvps.findIndex((r) => r.passCode === newEntry.passCode);
-  if (existingIdx >= 0) {
-    rsvps[existingIdx] = newEntry;
-  } else {
-    rsvps.unshift(newEntry);
+  const nextRsvps = [...rsvps];
+  if (existingIdx >= 0) nextRsvps[existingIdx] = { ...newEntry, id: rsvps[existingIdx].id };
+  else nextRsvps.unshift(newEntry);
+  try {
+    saveRsvps(nextRsvps);
+    rsvps = nextRsvps;
+  } catch {
+    res.status(500).json({ error: 'Could not save your RSVP. Please try again.' });
+    return;
   }
-
-  saveRsvps(rsvps);
 
   // Trigger sync to Google Sheet webhook
   const webhookResult = await forwardToGoogleSheetWebhook(newEntry);
