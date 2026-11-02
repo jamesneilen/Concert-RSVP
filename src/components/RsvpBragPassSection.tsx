@@ -19,7 +19,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { toPng } from 'html-to-image';
+import { exportFlyerPng } from '../utils/exportFlyer';
 import { INITIAL_PATRON, SAMPLE_AVATARS, PatronPassData, PATRON_TIERS, PatronTier } from '../data/concertData';
 import { submitRsvpToSpreadsheet } from '../services/rsvpRegistryService';
 import { SocialShareModal } from './SocialShareModal';
@@ -228,12 +228,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
   const getFlyerFile = async (): Promise<File | null> => {
     if (!flyerCardRef.current) return null;
     try {
-      const dataUrl = await toPng(flyerCardRef.current, {
-        cacheBust: true,
-        skipFonts: true,
-        quality: 0.98,
-        pixelRatio: 2,
-      });
+      const dataUrl = await exportFlyerPng(flyerCardRef.current);
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const cleanName = formData.fullName.trim().replace(/\s+/g, '_') || 'Patron';
@@ -263,12 +258,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
     setIsDownloading(true);
 
     try {
-      const dataUrl = await toPng(flyerCardRef.current, {
-        cacheBust: true,
-        skipFonts: true,
-        quality: 0.98,
-        pixelRatio: 2,
-      });
+      const dataUrl = await exportFlyerPng(flyerCardRef.current);
 
       const cleanName = formData.fullName.trim().replace(/\s+/g, '_') || 'Patron';
       const link = document.createElement('a');
@@ -801,7 +791,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 <div className="text-right flex-shrink-0">
                   <span
                     id="flyer-tier-badge"
-                    className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${getTierColorStyle()}`}
+                    className={`inline-block whitespace-nowrap px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${getTierColorStyle()}`}
                   >
                     {formData.tier}
                   </span>
@@ -847,9 +837,9 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 </div>
 
                 <div className="mb-3 sm:mb-4">
-                  <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e9c349]/40 bg-[#1f4a3c]/70 px-5 py-1.5 font-serif text-lg sm:text-xl font-bold text-[#e9c349]">
-                    <CheckCircle2 className="w-4 h-4" />
-                    I will be there
+                  <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e9c349]/40 bg-[#1f4a3c]/70 px-5 py-1.5 font-serif text-lg sm:text-xl font-bold text-[#e9c349] whitespace-nowrap">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>I will be there</span>
                   </span>
                 </div>
 
@@ -864,9 +854,9 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 </p>
 
                 {/* Venue Notice in Card */}
-                <div className="inline-flex items-center gap-1.5 text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mt-1.5 sm:mt-2 px-2.5 sm:px-3 py-0.5 rounded-full bg-[#1f4a3c]/70 border border-[#e9c349]/20 max-w-full">
+                <div className="inline-flex items-center gap-1.5 text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mt-1.5 sm:mt-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#1f4a3c]/70 border border-[#e9c349]/20 max-w-full">
                   <Church className="w-3 h-3 flex-shrink-0" />
-                  <span className="leading-relaxed">Christ the King Parish, Nacho, Bamenda</span>
+                  <span className="block min-w-0 leading-relaxed">Christ the King Parish, Nacho, Bamenda</span>
                 </div>
 
                 {/* Garland / Ribbon Motif divider */}

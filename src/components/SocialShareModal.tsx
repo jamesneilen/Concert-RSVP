@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { exportFlyerPng } from '../utils/exportFlyer';
 import { PatronPassData } from '../data/concertData';
 
 interface SocialShareModalProps {
@@ -81,12 +81,7 @@ ${shareUrl}`;
       return null;
     }
 
-    const dataUrl = await toPng(cardElement, {
-      cacheBust: true,
-        skipFonts: true,
-      quality: 0.98,
-      pixelRatio: 2,
-    });
+    const dataUrl = await exportFlyerPng(cardElement);
 
     const res = await fetch(dataUrl);
     const blob = await res.blob();
