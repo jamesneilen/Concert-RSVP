@@ -125,11 +125,26 @@ button:disabled { cursor:wait; opacity:.6; }
   & label { display:block; font-size:.95rem; font-weight:600; }
   & small { font-size:.85em; font-weight:400; color:#e2bebc; }
   & input, & select { display:block; width:100%; min-width:0; min-height:46px; margin:.4rem 0 1rem; padding:.65rem .75rem; border:1px solid #555750; border-radius:.4rem; background:#101412; color:#f3eee4; font-size:1rem; }
+  & select {
+    appearance:none;
+    padding-right:2.25rem;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23e9c349' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 6 5 5 5-5'/%3E%3C/svg%3E");
+    background-position:right .75rem center;
+    background-size:1rem 1rem;
+    background-repeat:no-repeat;
+  }
   & input::file-selector-button { color:#ffe088; background:#292d28; border:1px solid #e9c34950; padding:.3rem .6rem; border-radius:.25rem; margin-right:.6rem; cursor:pointer; }
   & .fields { display:grid; grid-template-columns:1fr 2fr; gap:.8rem; }
   & fieldset { min-width:0; }
   & .form-details { border-top:1px solid #e9c34930; }
-  & summary { padding:.85rem 0; cursor:pointer; }
+  & summary { position:relative; list-style:none; padding:.85rem 2.25rem .85rem 0; cursor:pointer; }
+  & summary::-webkit-details-marker { display:none; }
+  & summary::after {
+    content:""; position:absolute; right:1rem; top:50%; width:.55rem; height:.55rem;
+    border-right:2px solid #e9c349; border-bottom:2px solid #e9c349;
+    transform:translateY(-70%) rotate(45deg);
+  }
+  & details[open] > summary::after { transform:translateY(-30%) rotate(225deg); }
   & .portraits, & .flyer-tools { display:flex; flex-wrap:wrap; align-items:center; gap:.7rem; padding:.8rem 0; }
   & .portraits button { width:44px; height:44px; border-radius:50%; }
   & .portraits img { width:100%; height:100%; border-radius:inherit; object-fit:cover; }
@@ -149,3 +164,5 @@ button:disabled { cursor:wait; opacity:.6; }
 .concert-program-part li::marker { color:#e9c349; }
 @media(max-width:760px) { .concert-rsvp .registration { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:380px) { .concert-rsvp .fields { grid-template-columns:minmax(0,1fr); gap:0; } }
+
+@media (forced-colors:active) { .concert-rsvp select { appearance:auto; background-image:none; padding-right:.75rem; } }
