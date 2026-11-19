@@ -202,10 +202,7 @@ export function RsvpBragPassSection({ formData, setFormData }: {
                   <img src={formData.photoUrl} alt="Concert guest portrait" crossOrigin="anonymous"
                     className="absolute inset-x-0 top-0 h-[80%] w-full object-cover"
                     style={{ objectPosition: '50% 32%' }}
-                    onError={(event) => {
-                      if (event.currentTarget.getAttribute('src') !== INITIAL_PATRON.photoUrl)
-                        event.currentTarget.src = INITIAL_PATRON.photoUrl;
-                    }} />
+ />
                   <svg viewBox="0 0 800 1000" className="absolute inset-0 h-full w-full"
                     role="img" aria-label="St. Cletus Choir Christmas Concert RSVP flyer"
                     fontFamily="Arial, Helvetica, sans-serif" fill="#fff3dc">
@@ -243,7 +240,7 @@ export function RsvpBragPassSection({ formData, setFormData }: {
               )}
               {formData.fullName.trim() && (
                 <div className="absolute inset-x-[6%] bottom-[40%] text-center">
-                  <span className="inline-block max-w-full break-words rounded bg-[#390814]/90 px-2 py-0.5 font-semibold text-[#fff3dc]">
+                  <span data-flyer-name className="inline-block max-w-full break-words rounded bg-[#390814]/90 px-2 py-0.5 font-semibold text-[#fff3dc]">
                     {formData.fullName}
                   </span>
                 </div>
