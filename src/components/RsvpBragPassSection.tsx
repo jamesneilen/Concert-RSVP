@@ -6,13 +6,9 @@ import {
   Share2,
   Copy,
   Lock,
-  Church,
   Sparkles,
-  QrCode,
   UserCheck,
   ChevronDown,
-  Calendar,
-  Clock,
   Heart,
   AlertCircle,
   Loader2,
@@ -88,27 +84,22 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
         return;
       }
 
-      // Load into offscreen Image to calculate center square crop and optimal canvas size
+      // Resize the full portrait before placing it on the flyer
       const img = new Image();
 
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
-          const targetDim = 800; // Optimal 800x800 for crystal-clear flyer embossing without bloat
-          canvas.width = targetDim;
-          canvas.height = targetDim;
+          const scale = Math.min(1, 1440 / Math.max(img.width, img.height));
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
 
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
 
-            // Center square aspect-fill calculation
-            const minSide = Math.min(img.width, img.height);
-            const sx = (img.width - minSide) / 2;
-            const sy = (img.height - minSide) / 2;
-
-            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetDim, targetDim);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
             const updatedPass: PatronPassData = {
@@ -318,22 +309,6 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
     }
   };
 
-  const getTierColorStyle = () => {
-    switch (formData.tier) {
-      case 'VIP Benefactor (Reserved)':
-        return 'bg-[#e9c349] text-[#3c2f00] font-bold shadow-sm';
-      case 'Clergy Guest (Honorary)':
-        return 'bg-[#8b0014] text-[#dfe4de] border border-[#ffb3ae]/40 font-bold';
-      case 'Choir Patron':
-        return 'bg-[#af8d11] text-[#0a0f0c] border border-[#ffe088]/60 font-bold shadow-sm';
-      case 'Choir Alumni':
-        return 'bg-[#1f4a3c] text-[#a3d0be] border border-[#a3d0be]/40 font-bold';
-      case 'General Admission (Free)':
-      default:
-        return 'bg-[#313632] text-[#dfe4de] border border-[#e9c349]/30';
-    }
-  };
-
   const getTierSeating = () => {
     const tierInfo = PATRON_TIERS.find((t) => t.id === formData.tier);
     return tierInfo ? tierInfo.seatingDefault : 'Reserved Seating Granted • Main Sanctuary Nave';
@@ -398,7 +373,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                     )}
                   </div>
                   <p className="text-[11px] sm:text-xs text-[#e2bebc] mb-3 leading-relaxed">
-                    Upload your portrait photo (PNG, JPG, WebP). Your picture will be embossed instantly onto your official Concert Brag Flyer.
+                    Upload your portrait photo (PNG, JPG, WebP). Your picture appears on your concert flyer.
                   </p>
 
                   <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4">
@@ -589,7 +564,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                     />
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-[#e2bebc] mt-1">
-                    This exact name will be custom gold-embossed on your brag flyer.
+                    Your name appears above “I will be there!” on the flyer.
                   </p>
                 </div>
 
@@ -750,157 +725,67 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
               </span>
             </div>
 
-            {/* THE SACRED BRAG PASS GRAPHIC CARD (Render Target) */}
-            <div
-              ref={flyerCardRef}
-              id="brag-pass-card"
-              className={`relative w-full rounded-xl overflow-hidden bg-gradient-to-b from-[#8b0014] via-[#0a0f0c] to-[#0a0f0c] shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-[#dfe4de] p-3.5 sm:p-6 lg:p-7 flex flex-col justify-between my-auto border-2 border-[#e9c349]/40 transition-all duration-300 ${
-                isPassPulsing ? 'scale-[1.01] border-[#e9c349] shadow-[0_0_30px_rgba(233,195,73,0.4)]' : ''
-              }`}
-            >
-              {/* Ornate Outer Gold Halo */}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c349]/15 via-transparent to-transparent pointer-events-none" />
-
-              {/* Top Header & Parish Seal Bar */}
-              <div className="relative z-10 flex items-start justify-between flex-wrap border-b border-[#e9c349]/30 pb-2.5 sm:pb-3 gap-2">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-[#0a0f0c]/90 flex items-center justify-center shadow-lg text-[#e9c349] border border-[#e9c349]/40 flex-shrink-0">
-                    <Church className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] tracking-widest uppercase block leading-none mb-1 truncate">
-                      Official RSVP Concert Flyer • 2026
-                    </span>
-                    <h4 className="font-serif text-base sm:text-lg font-bold text-[#dfe4de] tracking-wide leading-tight truncate">
-                      St Cletus Choir
-                    </h4>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <span
-                    id="flyer-tier-badge"
-                    className={`inline-block whitespace-nowrap px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${getTierColorStyle()}`}
-                  >
-                    {formData.tier}
+            <div ref={flyerCardRef} id="brag-pass-card"
+              className={`relative mx-auto my-auto w-full overflow-hidden bg-[#370511] ${isPassPulsing ? 'ring-2 ring-[#e6b345]' : ''}`}
+              style={{ aspectRatio: '4 / 5', maxWidth: 560, opacity: isProcessingPhoto ? 0.85 : 1 }}>
+              {formData.photoUrl === INITIAL_PATRON.photoUrl ? (
+                <img src="/assets/choir-rsvp-2026.webp" alt="St. Cletus Choir Christmas Concert. I will be there! Sunday, 27 December 2026 at 1:00 PM, Christ the King Parish, Mankon, Nacho, Bamenda."
+                  className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <>
+                  <img src={formData.photoUrl} alt="Concert guest portrait" crossOrigin="anonymous"
+                    className="absolute inset-x-0 top-0 h-[80%] w-full object-cover"
+                    style={{ objectPosition: '50% 32%' }}
+                    onError={(event) => {
+                      if (event.currentTarget.getAttribute('src') !== INITIAL_PATRON.photoUrl)
+                        event.currentTarget.src = INITIAL_PATRON.photoUrl;
+                    }} />
+                  <svg viewBox="0 0 800 1000" className="absolute inset-0 h-full w-full"
+                    role="img" aria-label="St. Cletus Choir Christmas Concert RSVP flyer"
+                    fontFamily="Arial, Helvetica, sans-serif" fill="#fff3dc">
+                    <defs>
+                      <linearGradient id="concert-shade" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                        <stop stopColor="#28000c" stopOpacity=".48" />
+                        <stop offset=".23" stopColor="#590e1e" stopOpacity=".06" />
+                        <stop offset=".48" stopColor="#590e1e" stopOpacity=".10" />
+                        <stop offset=".78" stopColor="#23050d" />
+                        <stop offset="1" stopColor="#110508" />
+                      </linearGradient>
+                    </defs>
+                    <rect width="800" height="1000" fill="url(#concert-shade)" />
+                    <g textAnchor="end" style={{ textShadow: '0 1px 5px #310811' }}>
+                      <text x="770" y="55" fontSize="30" fontWeight="900">ST. CLETUS CHOIR</text>
+                      <text x="770" y="85" fontSize="26" fontStyle="italic">Christmas Concert</text>
+                    </g>
+                    <rect x="30" y="303" width="162" height="204" rx="16" fill="#680b24" />
+                    <g textAnchor="middle" fontWeight="900">
+                      <text x="111" y="352" fontSize="45">SUN</text>
+                      <text x="111" y="405" fontSize="40">27 DEC</text>
+                      <text x="111" y="448" fontSize="40">2026</text>
+                      <text x="111" y="488" fontSize="32">1:00 PM</text>
+                    </g>
+                    <g textAnchor="middle">
+                      <text x="400" y="707" fill="#e6b345" fontWeight="1000" fontSize="143" letterSpacing="-6">I WILL</text>
+                      <text x="400" y="815" fontWeight="1000" fontSize="119" letterSpacing="-5" textLength="720" lengthAdjust="spacingAndGlyphs">BE THERE!</text>
+                      <text x="400" y="860" fill="#e6b345" fontStyle="italic" fontWeight="700" fontSize="36">Sing Unto God for Christ is Born</text>
+                      <rect x="87" y="888" width="626" height="88" fill="none" stroke="#fff3dc" strokeWidth="2" />
+                      <text x="400" y="926" fontSize="29" fontWeight="700">Christ the King Parish, Mankon</text>
+                      <text x="400" y="961" fontSize="27">Nacho, Bamenda</text>
+                    </g>
+                  </svg>
+                </>
+              )}
+              {formData.fullName.trim() && (
+                <div className="absolute inset-x-[6%] bottom-[40%] text-center">
+                  <span className="inline-block max-w-full break-words rounded bg-[#390814]/90 px-2 py-0.5 font-semibold text-[#fff3dc]">
+                    {formData.fullName}
                   </span>
                 </div>
-              </div>
-
-              {/* Concert Theme Banner on Flyer */}
-              <div className="relative z-10 text-center mt-2.5 sm:mt-3 mb-2 px-2.5 py-1 sm:py-1.5 rounded bg-[#0a0f0c]/80 border border-[#e9c349]/20 shadow-inner">
-                <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349]/80 tracking-widest uppercase block">
-                  Concert Theme
-                </span>
-                <span className="font-serif text-base sm:text-lg lg:text-xl text-[#e9c349] font-bold italic tracking-wide block leading-snug">
-                  “Sing Unto God for Christ is Born”
-                </span>
-              </div>
-
-              {/* Center Dynamic Patron Spotlight with Photo Frame */}
-              <div className="relative z-10 my-2 sm:my-3 py-3 sm:py-4 bg-[#0a0f0c]/70 rounded-lg px-2.5 sm:px-4 backdrop-blur-sm text-center border border-[#e9c349]/20">
-                {/* Attendee Photo Display Frame */}
-                <div className="relative mx-auto mb-2 sm:mb-3 w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-[#e9c349] via-[#ffe088] to-[#e9c349] shadow-[0_0_24px_rgba(233,195,73,0.45)]">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-[#313632] relative">
-                    <img
-                      key={formData.photoUrl}
-                      src={formData.photoUrl}
-                      alt="Patron attendee portrait on brag pass"
-                      crossOrigin="anonymous"
-                      className={`w-full h-full object-cover transition-all duration-300 ${
-                        isProcessingPhoto ? 'opacity-40 scale-105' : 'opacity-100 scale-100'
-                      }`}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = INITIAL_PATRON.photoUrl;
-                      }}
-                    />
-                    {isProcessingPhoto && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[#e9c349]">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#8b0014] border-2 border-[#e9c349] flex items-center justify-center text-[#e9c349] shadow-md">
-                    <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </div>
-                </div>
-
-                <div className="mb-3 sm:mb-4">
-                  <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e9c349]/40 bg-[#1f4a3c]/70 px-5 py-1.5 font-serif text-lg sm:text-xl font-bold text-[#e9c349] whitespace-nowrap">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>I will be there</span>
-                  </span>
-                </div>
-
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#e9c349] uppercase tracking-[0.2em] sm:tracking-[0.25em] block mb-0.5">
-                  Honored Patron Attendee
-                </span>
-                <div className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-[#e9c349] drop-shadow-md my-1 break-words px-1">
-                  {formData.fullName || 'Honored Parish Guest'}
-                </div>
-                <p className="text-[11px] sm:text-xs text-[#e2bebc] mt-0.5">
-                  {getTierSeating()}
-                </p>
-
-                {/* Venue Notice in Card */}
-                <div className="inline-flex items-center gap-1.5 text-[#e9c349] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mt-1.5 sm:mt-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#1f4a3c]/70 border border-[#e9c349]/20 max-w-full">
-                  <Church className="w-3 h-3 flex-shrink-0" />
-                  <span className="block min-w-0 leading-relaxed">Christ the King Parish, Nacho, Bamenda</span>
-                </div>
-
-                {/* Garland / Ribbon Motif divider */}
-                <div className="flex items-center justify-center gap-2 my-2 sm:my-2.5 text-[#e9c349]">
-                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
-                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest">
-                    Christmas Concert
-                  </span>
-                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="h-px w-6 sm:w-10 bg-[#e9c349]/40" />
-                </div>
-
-                {/* Date, Time, Venue Details in Pass */}
-                <div className="grid grid-cols-2 gap-2 text-left bg-[#1c211e]/80 p-2 sm:p-2.5 rounded border border-[#e9c349]/15">
-                  <div>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
-                      <Calendar className="w-2.5 h-2.5" />
-                      Event Date
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
-                      Sun, Dec 27, 2026
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-[#e9c349] uppercase block flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      Curtain Call
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-semibold text-[#dfe4de] block truncate">
-                      1:00 PM WAT
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Pass Stub with QR Code & Barcode */}
-              <div className="relative z-10 pt-2 flex items-center justify-between border-t border-[#e9c349]/25 text-[9px] sm:text-[10px] text-[#e2bebc]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <QrCode className="w-6 h-6 sm:w-7 sm:h-7 text-[#e9c349] flex-shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[#e9c349] font-mono font-bold block truncate">
-                      {formData.passCode}
-                    </span>
-                    <span className="truncate block">
-                      {formData.guestCount} {formData.guestCount === 1 ? 'Guest' : 'Guests'} Reserved
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0 pl-1">
-                  <span className="text-[8px] sm:text-[9px] font-mono tracking-widest text-[#e9c349]/80 block">
-                    ||| | |||| | |||
-                  </span>
-                  <span className="text-[8px] sm:text-[9px] text-[#a3d0be]">SANCTUARY ACCESS</span>
-                </div>
-              </div>
+              )}
+            </div>
+            <div className="mt-3 text-sm text-[#e2bebc]" aria-live="polite">
+              <strong>{formData.fullName || 'Honored Parish Guest'}</strong> · {formData.tier} · {formData.guestCount} {formData.guestCount === 1 ? 'guest' : 'guests'}
+              <p>{getTierSeating()}</p>
             </div>
 
             {/* Flyer Actions & Social Media Share Suite */}

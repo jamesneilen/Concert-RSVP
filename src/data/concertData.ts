@@ -153,12 +153,12 @@ export const INITIAL_PATRON: PatronPassData = {
   guestCount: 1,
   seatingZone: 'Main Sanctuary Nave • Open Seating',
   passCode: 'RSVP-PREVIEW',
-  photoUrl: '/assets/avatars/avatar_eleanor.jpg',
+  photoUrl: '/assets/avatars/choir-rsvp-portrait.webp',
   prayerIntentions: '',
 };
 
 export const SAMPLE_AVATARS = [
-  { name: 'Portrait 1', url: '/assets/avatars/avatar_eleanor.jpg' },
+  { name: 'Portrait 1', url: '/assets/avatars/choir-rsvp-portrait.webp' },
   { name: 'Portrait 2', url: '/assets/avatars/avatar_julius.jpg' },
   { name: 'Portrait 3', url: '/assets/avatars/avatar_beatrice.jpg' },
   { name: 'Portrait 4', url: '/assets/avatars/avatar_emmanuel.jpg' },

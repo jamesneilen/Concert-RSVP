@@ -9,7 +9,7 @@ export async function exportFlyerPng(card: HTMLElement): Promise<string> {
   const fontEmbedCSS = await getFontEmbedCSS(card, { preferredFontFormat: 'woff2' });
   return toPng(card, {
     fontEmbedCSS,
-    pixelRatio: 2,
+    pixelRatio: 1080 / card.offsetWidth,
     style: { transform: 'none', animation: 'none', transition: 'none' },
   });
 }
