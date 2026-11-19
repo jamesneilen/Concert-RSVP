@@ -22,7 +22,7 @@ export default function App() {
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth',
+        behavior: 'auto',
       });
       // Focus on the first input inside the form for convenience
       const nameInput = document.getElementById('rsvp-name') as HTMLInputElement;
@@ -32,30 +32,26 @@ export default function App() {
     }
   };
 
-  const handlePassConfirmed = (pass: PatronPassData) => {
-    setCurrentPass(pass);
-  };
-
   return (
     <div className="bg-[#101412] text-[#dfe4de] min-h-screen flex flex-col font-sans selection:bg-[#8b0014] selection:text-[#ff908a]">
       {/* Liturgical Navigation Header */}
       <Header
         onOpenRsvp={handleOpenRsvp}
-        onOpenPassModal={() => setShowPassModal(true)}
+        onOpenPassModal={() => currentPass.confirmedAt ? setShowPassModal(true) : handleOpenRsvp()}
       />
 
       <main className="w-full flex-grow">
         {/* Monumental Hero Section with Countdown & Cathedral Backing */}
         <Hero />
 
-        {/* Featured Guest Choir, Choirmaster Profile & Concert Program Selection */}
-        <RepertoireSection />
-
         {/* Central RSVP Portal with Live Custom Brag Pass Flyer Generator & PNG Exporter */}
         <RsvpBragPassSection
-          onPassConfirmed={handlePassConfirmed}
-          onPassChange={handlePassConfirmed}
+          formData={currentPass}
+          setFormData={setCurrentPass}
         />
+
+        {/* Featured Guest Choir, Choirmaster Profile & Concert Program Selection */}
+        <RepertoireSection />
 
         {/* Sanctuary & Venue Arrival Logistics */}
         <LogisticsAndVenue />
@@ -92,7 +88,7 @@ export default function App() {
       </aside>
 
       {/* Quick Patron Pass Modal (viewed via profile icon or mobile dock) */}
-      {showPassModal && (
+      {showPassModal && currentPass.confirmedAt && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
           onClick={() => setShowPassModal(false)}
@@ -194,13 +190,9 @@ export default function App() {
 
       {/* Social Media Share Suite Modal */}
       <SocialShareModal
-        isOpen={showShareModal}
+        isOpen={showShareModal && !!currentPass.confirmedAt}
         onClose={() => setShowShareModal(false)}
         patron={currentPass}
-        onDownloadImage={() => {
-          setShowShareModal(false);
-          handleOpenRsvp();
-        }}
       />
 
     </div>

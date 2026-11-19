@@ -14,7 +14,7 @@ export const LogisticsAndVenue: React.FC = () => {
             Venue, Seating & Arrival Logistics
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-[#e2bebc] mt-2 max-w-xl leading-relaxed">
-            Everything you need for a joyful, serene, and spirit-filled Christmas evening at Christ the King Parish.
+            Join us on Sunday afternoon at Christ the King Parish in Nacho, Bamenda.
           </p>
         </div>
 

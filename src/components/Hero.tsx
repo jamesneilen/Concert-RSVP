@@ -170,7 +170,7 @@ export const Hero: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] text-[#e9c349] uppercase">
-                Date & Evening
+                Concert date
               </div>
               <div className="text-xs sm:text-sm md:text-base font-semibold text-[#dfe4de] truncate">
                 Sun, Dec 27, 2026

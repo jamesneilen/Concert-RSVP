@@ -19,7 +19,6 @@ interface SocialShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   patron: PatronPassData;
-  onDownloadImage: () => void;
   getFlyerFile?: () => Promise<File | null>;
 }
 
@@ -27,7 +26,6 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   isOpen,
   onClose,
   patron,
-  onDownloadImage,
   getFlyerFile,
 }) => {
   const [copiedCaption, setCopiedCaption] = useState(false);
@@ -91,6 +89,12 @@ ${shareUrl}`;
     });
   };
 
+  const onDownloadImage = () => {
+    const link = document.querySelector<HTMLAnchorElement>('#rsvp-portal a[download]');
+    if (link) link.click();
+    setFeedbackMessage(link ? 'Flyer download started.' : 'Your flyer is still being prepared. Please try again.');
+  };
+
   // Primary sharing action: shares the actual flyer file with the caption text attached
   const handleShareFlyerWithText = async (targetPlatform?: 'whatsapp' | 'facebook' | 'twitter') => {
     setIsGenerating(true);
@@ -118,21 +122,6 @@ ${shareUrl}`;
       }
 
       // If file sharing is not supported directly (e.g., desktop browsers):
-      // 1. Copy image to clipboard
-      let imageCopiedSuccess = false;
-      if (file && typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': file }),
-          ]);
-          imageCopiedSuccess = true;
-          setCopiedImage(true);
-          setTimeout(() => setCopiedImage(false), 3000);
-        } catch (clipErr) {
-          console.warn('Direct image clipboard copy not permitted:', clipErr);
-        }
-      }
-
       // 2. Download the flyer image automatically so user has the file
       if (file) {
         const url = URL.createObjectURL(file);
@@ -144,13 +133,20 @@ ${shareUrl}`;
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       } else {
-        onDownloadImage();
+        setFeedbackMessage('Could not prepare the flyer. Please try again.');
+        return;
       }
 
       // 3. Copy caption text to clipboard
-      await navigator.clipboard.writeText(flyerCaptionText);
-      setCopiedCaption(true);
-      setTimeout(() => setCopiedCaption(false), 3000);
+      let captionCopied = false;
+      try {
+        await navigator.clipboard.writeText(flyerCaptionText);
+        captionCopied = true;
+        setCopiedCaption(true);
+        setTimeout(() => setCopiedCaption(false), 3000);
+      } catch {
+        // The caption remains selectable in this dialog.
+      }
 
       // 4. If a specific social platform was clicked on desktop, launch it
       if (targetPlatform === 'whatsapp') {
@@ -173,17 +169,13 @@ ${shareUrl}`;
       }
 
       setFeedbackMessage(
-        imageCopiedSuccess
-          ? 'Flyer image downloaded and copied to clipboard! Paste (Ctrl+V) into your chat to send the flyer image with your caption.'
-          : 'Flyer image downloaded and caption copied! Attach the downloaded flyer to your message.'
+        captionCopied ? 'Flyer download started and caption copied.' : 'Flyer download started. Select the caption below to copy it.'
       );
       setTimeout(() => setFeedbackMessage(null), 7000);
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         console.error('Sharing error:', err);
-        onDownloadImage();
-        navigator.clipboard.writeText(flyerCaptionText);
-        setFeedbackMessage('Flyer downloaded and caption copied to clipboard!');
+        setFeedbackMessage('Sharing could not finish. Use Download PNG to save your flyer.');
         setTimeout(() => setFeedbackMessage(null), 5000);
       }
     } finally {
@@ -209,23 +201,27 @@ ${shareUrl}`;
         }, 4000);
       } else {
         onDownloadImage();
-        setFeedbackMessage('Flyer downloaded to your device!');
+
         setTimeout(() => setFeedbackMessage(null), 4000);
       }
     } catch (e) {
       console.warn('Clipboard write failed:', e);
       onDownloadImage();
-      setFeedbackMessage('Flyer downloaded to your device!');
+
       setTimeout(() => setFeedbackMessage(null), 4000);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleCopyCaptionOnly = () => {
-    navigator.clipboard.writeText(flyerCaptionText);
-    setCopiedCaption(true);
-    setTimeout(() => setCopiedCaption(false), 2500);
+  const handleCopyCaptionOnly = async () => {
+    try {
+      await navigator.clipboard.writeText(flyerCaptionText);
+      setCopiedCaption(true);
+      setTimeout(() => setCopiedCaption(false), 2500);
+    } catch {
+      setFeedbackMessage('Clipboard access is unavailable. Select the caption below to copy it.');
+    }
   };
 
   return (

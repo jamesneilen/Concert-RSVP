@@ -181,12 +181,12 @@ async function forwardToGoogleSheetWebhook(entry: RsvpEntry): Promise<{
     } catch (_) {}
 
     if (res.ok) {
-      if (parsed && parsed.result === 'error') {
-        console.warn(`[Google Sheet Error Response]`, parsed.message || text);
+      if (!(parsed?.result === 'success' || parsed?.success === true)) {
+        console.warn(`[Google Sheet Error Response]`, parsed?.message || text);
         return {
           success: false,
           status: res.status,
-          error: parsed.message || 'Google Apps Script reported an error',
+          error: parsed?.message || 'Google Apps Script reported an error',
           rawResponse: text,
         };
       }
@@ -263,6 +263,10 @@ app.post('/api/rsvp', async (req: Request, res: Response) => {
   // Trigger sync to Google Sheet webhook
   const webhookResult = await forwardToGoogleSheetWebhook(newEntry);
 
+  if (!webhookResult.success) {
+    res.status(502).json({ error: 'The RSVP registry could not confirm your reservation. Please try again.' });
+    return;
+  }
   res.status(200).json({
     success: true,
     message: 'Your RSVP is confirmed.',
