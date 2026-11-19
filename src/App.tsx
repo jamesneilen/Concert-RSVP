@@ -22,7 +22,7 @@ export default function App() {
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth',
+        behavior: 'auto',
       });
       // Focus on the first input inside the form for convenience
       const nameInput = document.getElementById('rsvp-name') as HTMLInputElement;
@@ -193,10 +193,6 @@ export default function App() {
         isOpen={showShareModal && !!currentPass.confirmedAt}
         onClose={() => setShowShareModal(false)}
         patron={currentPass}
-        onDownloadImage={() => {
-          setShowShareModal(false);
-          handleOpenRsvp();
-        }}
       />
 
     </div>

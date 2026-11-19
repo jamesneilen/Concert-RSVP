@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth',
+        behavior: 'auto',
       });
       if (window.history.pushState) {
         window.history.pushState(null, '', `#${sectionId}`);
@@ -221,6 +221,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRsvp, onOpenPassModal }) =
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="xl:hidden p-1.5 sm:p-2 text-[#e9c349] hover:text-[#ffe088] rounded-md focus:outline-none cursor-pointer"
             aria-label="Toggle Navigation Menu"
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
