@@ -44,14 +44,14 @@ export default function App() {
         {/* Monumental Hero Section with Countdown & Cathedral Backing */}
         <Hero />
 
-        {/* Featured Guest Choir, Choirmaster Profile & Concert Program Selection */}
-        <RepertoireSection />
-
         {/* Central RSVP Portal with Live Custom Brag Pass Flyer Generator & PNG Exporter */}
         <RsvpBragPassSection
           formData={currentPass}
           setFormData={setCurrentPass}
         />
+
+        {/* Featured Guest Choir, Choirmaster Profile & Concert Program Selection */}
+        <RepertoireSection />
 
         {/* Sanctuary & Venue Arrival Logistics */}
         <LogisticsAndVenue />
