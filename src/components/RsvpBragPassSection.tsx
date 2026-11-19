@@ -21,15 +21,16 @@ import { submitRsvpToSpreadsheet } from '../services/rsvpRegistryService';
 import { SocialShareModal } from './SocialShareModal';
 
 interface RsvpBragPassSectionProps {
-  onPassConfirmed?: (pass: PatronPassData) => void;
-  onPassChange?: (pass: PatronPassData) => void;
+  formData: PatronPassData;
+  setFormData: React.Dispatch<React.SetStateAction<PatronPassData>>;
 }
 
 export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
-  onPassConfirmed,
-  onPassChange,
+  formData,
+  setFormData,
 }) => {
-  const [formData, setFormData] = useState<PatronPassData>(INITIAL_PATRON);
+  const pendingCode = useRef('');
+  const saving = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -52,6 +53,7 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
 
   // Robust client-side photo processing with automatic canvas centering, high-res optimization, and CORS avoidance
   const processImageFile = (file: File) => {
+    if (saving.current) return;
     setPhotoError(null);
 
     // Validate image MIME type or extension
@@ -102,33 +104,20 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
-            const updatedPass: PatronPassData = {
-              ...formData,
-              photoUrl: optimizedDataUrl,
-            };
+            setFormData(previous => ({ ...previous, photoUrl: optimizedDataUrl }));
 
-            setFormData(updatedPass);
-            onPassChange?.(updatedPass);
             triggerPassPulse();
             setPhotoError(null);
           } else {
             // Direct dataUrl fallback if 2D context unavailable
-            const updatedPass: PatronPassData = {
-              ...formData,
-              photoUrl: rawDataUrl,
-            };
-            setFormData(updatedPass);
-            onPassChange?.(updatedPass);
+            setFormData(previous => ({ ...previous, photoUrl: rawDataUrl }));
+
             triggerPassPulse();
           }
         } catch (canvasErr) {
           console.warn('Canvas optimization fallback:', canvasErr);
-          const updatedPass: PatronPassData = {
-            ...formData,
-            photoUrl: rawDataUrl,
-          };
-          setFormData(updatedPass);
-          onPassChange?.(updatedPass);
+          setFormData(previous => ({ ...previous, photoUrl: rawDataUrl }));
+
           triggerPassPulse();
         } finally {
           setIsProcessingPhoto(false);
@@ -165,38 +154,40 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       photoUrl: avatarUrl,
     };
     setFormData(updatedPass);
-    onPassChange?.(updatedPass);
+
     triggerPassPulse();
   };
 
   // Submit RSVP - automatically updates the spreadsheet in the backend
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (saving.current || formData.confirmedAt || isProcessingPhoto) return;
     if (!formData.fullName.trim()) {
       setActionError('Please enter your name.');
       return;
     }
+    pendingCode.current ||= `CK-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    saving.current = true;
     setIsSubmitting(true);
     setActionError(null);
     const updatedPass: PatronPassData = {
       ...formData,
       fullName: formData.fullName.trim(),
-      passCode: formData.confirmedAt ? formData.passCode : `CK-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      passCode: pendingCode.current,
       confirmedAt: new Date().toISOString(),
     };
     try {
       await submitRsvpToSpreadsheet(updatedPass);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Could not save your RSVP. Please try again.');
-      setIsSubmitting(false);
       return;
+    } finally {
+      saving.current = false;
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
     setFormData(updatedPass);
     triggerPassPulse();
 
-    onPassConfirmed?.(updatedPass);
 
     // Sacred gold & crimson celebratory confetti
     confetti({
@@ -206,7 +197,6 @@ export const RsvpBragPassSection: React.FC<RsvpBragPassSectionProps> = ({
       colors: ['#e9c349', '#8b0014', '#ffe088', '#a3d0be'],
     });
 
-    onPassChange?.(updatedPass);
 
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 6000);
@@ -356,7 +346,8 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 </span>
               </div>
 
-              <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-5">
+              <form id="concert-registration" onSubmit={handleFormSubmit}>
+                <fieldset disabled={isSubmitting} className="space-y-4 sm:space-y-5">
                 {/* Attendee Photo Upload Block */}
                 <div className="bg-[#181d1a] p-3.5 sm:p-5 rounded-lg border border-[#e9c349]/25">
                   <div className="flex items-center justify-between mb-1">
@@ -496,7 +487,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                               setUploadedFileName(null);
                               const updated = { ...formData, photoUrl: INITIAL_PATRON.photoUrl };
                               setFormData(updated);
-                              onPassChange?.(updated);
+
                               triggerPassPulse();
                             }}
                             className="text-[9px] text-[#e2bebc] hover:text-[#e9c349] underline ml-2 flex-shrink-0"
@@ -554,9 +545,9 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                       maxLength={120}
                       value={formData.fullName}
                       onChange={(e) => {
-                        const updated = { ...formData, fullName: e.target.value };
+                        const updated = { ...formData, confirmedAt: undefined, fullName: e.target.value };
                         setFormData(updated);
-                        onPassChange?.(updated);
+
                         triggerPassPulse();
                       }}
                       placeholder="Your full name"
@@ -583,11 +574,12 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                           const tierInfo = PATRON_TIERS.find((t) => t.id === newTier);
                           const updated = {
                             ...formData,
+                            confirmedAt: undefined,
                             tier: newTier,
                             seatingZone: tierInfo ? tierInfo.seatingDefault : formData.seatingZone,
                           };
                           setFormData(updated);
-                          onPassChange?.(updated);
+
                           triggerPassPulse();
                         }}
                         className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 rounded-lg text-base sm:text-xs appearance-none focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#e9c349]/30 min-h-[44px]"
@@ -613,6 +605,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                         onChange={(e) => {
                           setFormData((prev) => ({
                             ...prev,
+                            confirmedAt: undefined,
                             guestCount: parseInt(e.target.value, 10),
                           }));
                         }}
@@ -638,7 +631,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, confirmedAt: undefined, email: e.target.value }))}
                       placeholder="Your email address"
                       className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2 rounded-lg text-base sm:text-xs focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#313632] min-h-[44px]"
                     />
@@ -651,7 +644,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                       type="tel"
                       inputMode="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, confirmedAt: undefined, phone: e.target.value }))}
                       placeholder="675360863 or 672668334"
                       className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2 rounded-lg text-base sm:text-xs focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#313632] min-h-[44px]"
                     />
@@ -680,7 +673,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                     type="text"
                     value={formData.prayerIntentions}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, prayerIntentions: e.target.value }))
+                      setFormData((prev) => ({ ...prev, confirmedAt: undefined, prayerIntentions: e.target.value }))
                     }
                     placeholder="e.g. Prayer intention for peace in Bamenda"
                     className="w-full bg-[#0a0f0c] text-[#dfe4de] px-3.5 py-2.5 sm:py-2 rounded-lg text-base sm:text-xs focus:outline-none focus:ring-1 focus:ring-[#e9c349] border border-[#313632] min-h-[44px]"
@@ -690,13 +683,14 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 {/* Submit button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || isProcessingPhoto}
+                  disabled={isSubmitting || isProcessingPhoto || !!formData.confirmedAt}
                   className="w-full py-3.5 px-6 bg-[#e9c349] hover:bg-[#ffe088] text-[#3c2f00] font-bold text-xs sm:text-sm tracking-wider uppercase rounded-lg shadow-[0_0_24px_rgba(233,195,73,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
                 >
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <span>{isSubmitting ? 'Saving your RSVP…' : 'I will be there — Confirm RSVP'}</span>
+                  <span>{isSubmitting ? 'Saving your RSVP…' : formData.confirmedAt ? 'RSVP confirmed' : 'I will be there — Confirm RSVP'}</span>
                 </button>
                 {actionError && <p role="alert" className="text-sm text-[#ffb3ae]">{actionError}</p>}
+                </fieldset>
               </form>
             </div>
 
@@ -788,7 +782,8 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
               <p>{getTierSeating()}</p>
             </div>
 
-            {/* Flyer Actions & Social Media Share Suite */}
+            {formData.confirmedAt ? (
+
             <div className="mt-4 sm:mt-5 flex flex-col gap-3">
               {/* Primary action buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
@@ -887,12 +882,22 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
                 </span>
               </div>
             </div>
+            ) : (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-[#e2bebc]">Confirm your RSVP to download or share your flyer.</p>
+                <button type="submit" form="concert-registration" disabled={isSubmitting || isProcessingPhoto}
+                  className="w-full rounded-lg bg-[#e9c349] p-3 font-bold text-[#3c2f00] disabled:opacity-60">
+                  {isSubmitting ? 'Saving your RSVP…' : 'I will be there — Confirm RSVP'}
+                </button>
+                {actionError && <p role="alert" className="text-sm text-[#ffb3ae]">{actionError}</p>}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Success Notification Toast */}
-      {showSuccessToast && (
+      {showSuccessToast && formData.confirmedAt && (
         <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-auto z-50 bg-[#1c211e] border-2 border-[#e9c349] text-[#dfe4de] p-3.5 sm:p-4 rounded-xl shadow-2xl flex items-start gap-3 sm:max-w-sm animate-bounce">
           <div className="w-8 h-8 rounded-full bg-[#e9c349] text-[#3c2f00] flex items-center justify-center flex-shrink-0 font-bold">
             <CheckCircle2 className="w-5 h-5" />
@@ -921,7 +926,7 @@ I will be there! Here is my official personalized pass for "Sing Unto God for Ch
 
       {/* Social Media Sharing Modal Component */}
       <SocialShareModal
-        isOpen={showShareModal}
+        isOpen={showShareModal && !!formData.confirmedAt}
         onClose={() => setShowShareModal(false)}
         patron={formData}
         onDownloadImage={handleDownloadFlyer}

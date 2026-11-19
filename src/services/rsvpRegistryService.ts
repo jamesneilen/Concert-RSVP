@@ -5,10 +5,11 @@ export async function submitRsvpToSpreadsheet(patron: PatronPassData): Promise<{
   success: boolean;
   message: string;
 }> {
+  const { photoUrl, ...registration } = patron;
   const res = await fetch('/api/rsvp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patron),
+    body: JSON.stringify(registration),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {
