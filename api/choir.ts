@@ -12,7 +12,7 @@ export default function choir(req: IncomingMessage & {body?: unknown}, res: Serv
   const cookie = cookies.find(s => s.startsWith('choir_member='))?.slice('choir_member='.length);
   const form = typeof req.body === 'string' ? Object.fromEntries(new URLSearchParams(req.body)) : req.body as Record<string,unknown> | undefined;
   const flags = 'Path=/api/choir; HttpOnly; SameSite=Strict' + (process.env.NODE_ENV === 'production' || process.env.VERCEL ? '; Secure' : '');
-  const login = (message: string) => res.end(page('<h1>Choir member access</h1><p>Enter the personal access code issued to you by the choir.</p><form method="post"><label>Member code<input name="code" type="password" required autocomplete="current-password" maxlength="64"></label><button>Open my flyer studio</button></form><p role="status">'+message+'</p><a href="/">Concert home</a>'));
+  const login = (message: string) => res.end(page('<h1>Choir member access</h1><p>Paste your personal access code from the second column of the member list.</p><form method="post"><label>Member code<input name="code" type="password" required autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="128"></label><button>Open my flyer studio</button></form><p role="status">'+message+'</p><a href="/">Concert home</a>'));
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.statusCode = 405;
     res.setHeader('Allow', 'GET, POST');
@@ -23,7 +23,10 @@ export default function choir(req: IncomingMessage & {body?: unknown}, res: Serv
     res.writeHead(303, {Location:'/api/choir'});
     return res.end();
   }
-  const code = req.method === 'POST' ? form?.code : cookie;
+  // Mobile clipboards may include surrounding spaces or a whole spreadsheet row.
+  const pasted = typeof form?.code === 'string' ? form.code.trim() : '';
+  const cell = /^[^,\t\r\n]+[,\t]\s*("[A-Za-z0-9_-]{32}"|[A-Za-z0-9_-]{32})$/.exec(pasted)?.[1] ?? pasted;
+  const code = req.method === 'POST' ? cell.trim().replace(/^"([^"]+)"$/, '$1') : cookie;
   const allowed = new Set((process.env.CHOIR_MEMBER_HASHES ?? '').split(',').map(s => s.trim()).filter(Boolean));
   if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{32}$/.test(code) || !allowed.has(createHash('sha256').update(code).digest('hex'))) {
     if (req.method === 'POST') res.statusCode = 403;
