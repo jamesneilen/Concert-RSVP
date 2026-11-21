@@ -11,12 +11,15 @@ export const editor = `<h1 id="heading">Who Am I?</h1><div id="layout"><section>
 <label id="customLabel" hidden>Your concert role<input id="customRole" maxlength="42"></label>
 <label>Your concert moment <small>(optional)</small><textarea id="moment" maxlength="140" rows="3" placeholder="What are you looking forward to?"></textarea></label>
 <label>Portrait or group photo<input id="photo" type="file" accept="image/*"></label><div id="framing" hidden><label>Photo framing<select id="fit"><option value="fill">Fill flyer</option><option value="full">Show full photo</option></select></label><label id="positionLabel" hidden>Photo position<input id="position" type="range" min="0" max="100" value="50"></label></div><p id="notice" role="status"></p>
+<p>Your name or choir name and role will be recorded for the concert organisers when you create a flyer.</p>
+<button id="create" disabled>Create flyer</button>
 <button id="save" disabled>Download flyer</button> <button id="share" hidden>Share flyer</button></section>
 <canvas id="poster" width="1080" height="1350" aria-label="Personalised concert flyer preview"></canvas></div>
 <footer><a href="/">Concert home</a></footer>
 <script>
 const $=id=>document.getElementById(id);
 const canvas=$('poster'), ctx=canvas.getContext('2d');
+let registration=null, saving=false;
 let portrait=null, selection=0, file=null, download=null, revision=0;
 const samples={};
 for(const [kind,src] of Object.entries({person:'/assets/avatars/choir-rsvp-portrait.webp',group:'/assets/st_cletus_choir_group.jpeg'})){
@@ -53,6 +56,7 @@ function quoteLines(text){
   return rows;
 }
 function render(){
+  $('create').disabled=true;$('create').hidden=false;
   const version=++revision;file=null;download=null;$('save').disabled=true;$('share').hidden=true;
   ctx.fillStyle='#3c0818';ctx.fillRect(0,0,1080,1350);
   const custom=$('role').value==='other';
@@ -86,19 +90,43 @@ function render(){
   line('Sing Unto God for Christ is Born',1165,53,'#eac05b','italic bold');
   ctx.strokeStyle='#ebd9be';ctx.lineWidth=2;ctx.strokeRect(64,1200,952,119);
   line('Christ the King Parish, Mankon',1252,42,'#fff2dc');line('Nacho, Bamenda',1296,35,'#fff2dc','400');
-  if(!portrait||!$('performer').value.trim()||!role)return;
+  const performer=$('performer').value.trim();
+  if(!portrait||!performer||!role)return;
+  if(registration?.performer!==performer||registration?.role!==role){
+    registration={performer,role,id:crypto.randomUUID(),saved:false};
+  }
   canvas.toBlob(blob=>{
     if(version!==revision)return;
     if(!blob){$('notice').textContent='The PNG could not be created. Please select your photo again.';return;}
     const name=group?'St-Cletus-Who-Are-We.png':'St-Cletus-Who-Am-I.png';
     download={blob,name};
-    $('save').disabled=false;
+    $('create').hidden=registration.saved;
+    $('create').disabled=saving;
+    $('save').disabled=!registration.saved;
     if(typeof File==='function' && navigator.canShare && navigator.share){
       file=new File([blob],name,{type:'image/png'});
-      $('share').hidden=!navigator.canShare({files:[file]});
+      $('share').hidden=!registration.saved||!navigator.canShare({files:[file]});
     }
   },'image/png');
 }
+$('create').onclick=async()=>{
+  if(saving||!download||!registration||registration.saved)return;
+  const record=registration;
+  saving=true;$('create').disabled=true;
+  $('notice').textContent='Recording your flyer…';
+  try{
+    const response=await fetch('/api/performer-flyer',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:record.id,performer:record.performer,role:record.role}),
+    });
+    const result=await response.json();
+    if(!response.ok||result.success!==true)throw new Error();
+    record.saved=true;
+    $('notice').textContent=registration===record?'Your flyer is ready.':'';
+  }catch{
+    $('notice').textContent='Could not record your flyer. Please try Create flyer again.';
+  }finally{saving=false;render()}
+};
 $('fit').onchange=render;
 $('position').oninput=render;
 $('role').onchange=render;
