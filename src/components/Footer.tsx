@@ -107,7 +107,7 @@ export const Footer = () => {
             <span>Called to win by our voices</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/api/choir" className="text-[#e9c349] hover:underline">Choir member studio</a>
+            <a href="/api/choir" className="text-[#e9c349] hover:underline">Performer flyer studio</a>
             <button
               onClick={scrollToTop}
               className="p-2 rounded-lg bg-[#1c211e] hover:bg-[#313632] text-[#e9c349] border border-[#e9c349]/20 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
