@@ -10,7 +10,7 @@ export const editor = `<h1 id="heading">Who Am I?</h1><div id="layout"><section>
 <label>Concert role<select id="role" required><option value="" selected disabled>Select your role</option><option>Soprano</option><option>Alto</option><option>Tenor</option><option>Bass</option><option>Solo Guitar</option><option>Bass Guitar</option><option>Keyboard</option><option>Drums</option><option>Musical Director</option><option>Master of Ceremonies (MC)</option><option>Guest Choir</option><option value="other">Other role</option></select></label>
 <label id="customLabel" hidden>Your concert role<input id="customRole" maxlength="42"></label>
 <label>Your concert moment <small>(optional)</small><textarea id="moment" maxlength="140" rows="3" placeholder="What are you looking forward to?"></textarea></label>
-<label>Portrait or group photo<input id="photo" type="file" accept="image/*"></label><div id="framing" hidden><label>Photo framing<select id="fit"><option value="full">Show full photo</option><option value="fill">Fill photo area</option></select></label><label id="positionLabel" hidden>Photo position<input id="position" type="range" min="0" max="100" value="50"></label></div><p id="notice" role="status"></p>
+<label>Portrait or group photo<input id="photo" type="file" accept="image/*"></label><div id="framing" hidden><label>Photo framing<select id="fit"><option value="fill">Fill flyer</option><option value="full">Show full photo</option></select></label><label id="positionLabel" hidden>Photo position<input id="position" type="range" min="0" max="100" value="50"></label></div><p id="notice" role="status"></p>
 <button id="save" disabled>Download flyer</button> <button id="share" hidden>Share flyer</button></section>
 <canvas id="poster" width="1080" height="1350" aria-label="Personalised concert flyer preview"></canvas></div>
 <footer><a href="/">Concert home</a></footer>
@@ -25,7 +25,7 @@ for(const [kind,src] of Object.entries({person:'/assets/avatars/choir-rsvp-portr
   img.src=src;
 }
 function paintPhoto(image,fill,position){
-  const top=125,height=616,width=1080;
+  const top=0,height=1080,width=1080;
   const iw=image.naturalWidth,ih=image.naturalHeight;
   const scale=(fill?Math.max:Math.min)(width/iw,height/ih);
   const w=iw*scale,h=ih*scale;
@@ -64,15 +64,22 @@ function render(){
   const fill=portrait ? $('fit').value==='fill' : !group;
   $('framing').hidden=!portrait;
   $('positionLabel').hidden=!portrait||!fill;
-  if(image)paintPhoto(image,fill,portrait?Number($('position').value)/100:0.25);
-  ctx.fillStyle='#360b17';ctx.fillRect(0,0,1080,125);
-  line('ST. CLETUS CHOIR',56,38,'#fff2dc','800','left',40,570);
-  line('Christmas Concert',99,33,'#e8c379','italic','left',40,520);
-  line('SUN 27 DEC 2026',58,34,'#fff2dc','800','right',1040,425);
-  line('1:00 PM',99,32,'#e8c379','700','right',1040,400);
-  const shade=ctx.createLinearGradient(0,695,0,742);
-  shade.addColorStop(0,'rgba(60,8,24,0)');shade.addColorStop(1,'#3c0818');
-  ctx.fillStyle=shade;ctx.fillRect(0,695,1080,48);
+  if(image)paintPhoto(image,fill,portrait?Number($('position').value)/100:0.32);
+  const shade=ctx.createLinearGradient(0,0,0,1350);
+  shade.addColorStop(0,'rgba(40,0,12,.48)');
+  shade.addColorStop(.23,'rgba(89,14,30,.06)');
+  shade.addColorStop(.48,'rgba(89,14,30,.10)');
+  shade.addColorStop(.78,'#23050d');
+  shade.addColorStop(1,'#110508');
+  ctx.fillStyle=shade;ctx.fillRect(0,0,1080,1350);
+  ctx.save();
+  ctx.shadowColor='#310811';ctx.shadowBlur=7;
+  line('ST. CLETUS CHOIR',74,41,'#fff3dc','900','right',1040,730);
+  line('Christmas Concert',115,35,'#fff3dc','italic','right',1040,600);
+  ctx.restore();
+  ctx.fillStyle='#680b24';
+  ctx.beginPath();ctx.roundRect(40,409,219,276,22);ctx.fill();
+  ['SUN','27 DEC','2026','1:00 PM'].forEach((text,i)=>line(text,[475,547,605,659][i],[61,54,54,43][i],'#fff3dc','900','center',150,198));
   line(group?'WHO ARE WE?':'WHO AM I?',784,44,'#eac05b','800');line(($('performer').value.trim()||(group?'Choir name':'Your name')).toUpperCase(),900,110,'#fff3dc','900');
   line(role||'Concert role',980,68,'#eac05b','800');
   const rows=quoteLines($('moment').value);rows.forEach((t,i)=>line(t,1010+(i+.7)*Math.min(40,112/rows.length),34,'#fff2dc','400'));
@@ -100,7 +107,7 @@ $('photo').onchange=async()=>{
   const current=++selection, selected=$('photo').files[0];portrait=null;$('notice').textContent='';render();
   if(!selected)return;
   const url=URL.createObjectURL(selected),img=new Image();img.src=url;
-  try{await img.decode();if(current===selection){portrait=img;$('fit').value='full';$('position').value='50';render()}}
+  try{await img.decode();if(current===selection){portrait=img;$('fit').value='fill';$('position').value='32';render()}}
   catch{if(current===selection)$('notice').textContent='This photo could not be opened. Choose a JPEG or PNG.'}
   finally{URL.revokeObjectURL(url)}
 };
