@@ -1,7 +1,7 @@
 export function page(body: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Performer flyer studio · St. Cletus Christmas Concert</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#230a12;color:#fff2de;font:16px/1.5 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:clamp(20px,5vw,64px)}header{color:#eac064;font-weight:700;border-bottom:1px solid #744854;padding-bottom:14px}h1{font:600 clamp(32px,5vw,52px)/1.1 Georgia,serif;margin:30px 0 20px}label{display:block;font-weight:650;margin:14px 0}input,textarea{display:block;margin-top:5px;width:100%;padding:11px;background:#fff7ed;color:#32101b;border:1px solid #94707a;border-radius:5px;font:inherit}form{max-width:440px}button,.download{display:inline-block;background:#e9c064;color:#27121a;font:700 16px system-ui;padding:13px 18px;border:0;border-radius:5px;cursor:pointer;text-decoration:none}a{color:#f1d493}#layout{display:grid;grid-template-columns:1fr 1fr;gap:35px}canvas{width:100%;height:auto;display:block}small{font-weight:400}button:disabled{opacity:.55}footer{margin-top:28px;display:flex;align-items:center;gap:24px}footer button{background:transparent;color:#fff2de;text-decoration:underline}p:empty{display:none}@media(max-width:650px){#layout{grid-template-columns:1fr;gap:20px}}[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:#230a12;color:#fff2de;font:16px/1.5 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:clamp(20px,5vw,64px)}header{color:#eac064;font-weight:700;border-bottom:1px solid #744854;padding-bottom:14px}h1{font:600 clamp(32px,5vw,52px)/1.1 Georgia,serif;margin:30px 0 20px}label{display:block;font-weight:650;margin:14px 0}input,textarea{display:block;margin-top:5px;width:100%;padding:11px;background:#fff7ed;color:#32101b;border:1px solid #94707a;border-radius:5px;font:inherit}form{max-width:440px}button,.download{display:inline-block;background:#e9c064;color:#27121a;font:700 16px system-ui;padding:13px 18px;border:0;border-radius:5px;cursor:pointer;text-decoration:none}a{color:#f1d493}#layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:35px}canvas{min-width:0;width:100%;height:auto;display:block}small{font-weight:400}button:disabled{opacity:.55}footer{margin-top:28px;display:flex;align-items:center;gap:24px}footer button{background:transparent;color:#fff2de;text-decoration:underline}p:empty{display:none}@media(max-width:650px){#layout{grid-template-columns:minmax(0,1fr);gap:20px}}[hidden]{display:none!important}
 </style></head><body><main><header>St. Cletus Choir · Christmas Concert</header>${body}</main></body></html>`;
 }
 
@@ -17,11 +17,11 @@ export const editor = `<h1 id="heading">Who Am I?</h1><div id="layout"><section>
 <script>
 const $=id=>document.getElementById(id);
 const canvas=$('poster'), ctx=canvas.getContext('2d');
-let portrait=null, selection=0, file=null, revision=0;
+let portrait=null, selection=0, file=null, download=null, revision=0;
 function line(text,y,size,colour,weight='700',align='center',x=540,max=990){
   ctx.font=weight+' '+size+'px Arial,sans-serif';
   while(ctx.measureText(text).width>max && size>14){size--;ctx.font=weight+' '+size+'px Arial,sans-serif'}
-  ctx.fillStyle=colour;ctx.textAlign=align;ctx.fillText(text,x,y);
+  ctx.fillStyle=colour;ctx.textAlign=align;ctx.fillText(text,x,y,max);
 }
 function quoteLines(text){
   ctx.font='34px Arial';
@@ -33,7 +33,7 @@ function quoteLines(text){
   return rows;
 }
 function render(){
-  const version=++revision;file=null;$('save').disabled=true;$('share').hidden=true;
+  const version=++revision;file=null;download=null;$('save').disabled=true;$('share').hidden=true;
   ctx.fillStyle='#3c0818';ctx.fillRect(0,0,1080,1350);
   const group=$('role').value.trim().toLowerCase()==='guest choir';
   $('heading').textContent=group?'Who Are We?':'Who Am I?';
@@ -56,9 +56,15 @@ function render(){
   line('Christ the King Parish, Mankon',1252,42,'#fff2dc');line('Nacho, Bamenda',1296,35,'#fff2dc','400');
   if(!portrait||!$('performer').value.trim()||!$('role').value.trim())return;
   canvas.toBlob(blob=>{
-    if(version!==revision||!blob)return;
-    file=new File([blob],'St-Cletus-Who-Am-I.png',{type:'image/png'});
-    $('save').disabled=false;$('share').hidden=!navigator.canShare?.({files:[file]});
+    if(version!==revision)return;
+    if(!blob){$('notice').textContent='The PNG could not be created. Please select your photo again.';return;}
+    const name=group?'St-Cletus-Who-Are-We.png':'St-Cletus-Who-Am-I.png';
+    download={blob,name};
+    $('save').disabled=false;
+    if(typeof File==='function' && navigator.canShare && navigator.share){
+      file=new File([blob],name,{type:'image/png'});
+      $('share').hidden=!navigator.canShare({files:[file]});
+    }
   },'image/png');
 }
 ['performer','role','moment'].forEach(id=>$(id).oninput=render);
@@ -70,7 +76,7 @@ $('photo').onchange=async()=>{
   catch{if(current===selection)$('notice').textContent='This photo could not be opened. Choose a JPEG or PNG.'}
   finally{URL.revokeObjectURL(url)}
 };
-$('save').onclick=()=>{if(!file)return;const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)};
+$('save').onclick=()=>{if(!download)return;const url=URL.createObjectURL(download.blob),link=document.createElement('a');link.href=url;link.download=download.name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};
 $('share').onclick=async()=>{if(file)try{await navigator.share({files:[file]})}catch(e){if(e.name!=='AbortError')$('notice').textContent='Sharing is unavailable. Download the flyer to share it.'}};
 render();
 </script>`;
